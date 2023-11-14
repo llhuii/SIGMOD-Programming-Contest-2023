@@ -112,14 +112,13 @@ int main1(int argc, char **argv) {
 	KGraph *index = KGraph::create();
 
 
-
 	KGraph::IndexParams params;
 
 	params.S = 100;
 	params.K = 100;
-	params.L=  200;
-	params.R = 335;
-	params.iterations= 6;
+	params.L=  195;
+	params.R = 330;
+	params.iterations= 3;
 
 
 	params.recall = 1.0;
@@ -129,7 +128,7 @@ int main1(int argc, char **argv) {
 	  params.controls = 0;
 
 	// 【For local evaluation】
-// params.controls= 100;
+ params.controls= 100;
 
            uint32_t *data= (uint32_t*)KGraph::nodes.data();
 	printf("Build starting with S:%d, K:%d, L:%d, R:%d, iter=%d !\n", params.S, params.K, params.L, params.R, params.iterations);
@@ -150,6 +149,7 @@ int main1(int argc, char **argv) {
 }
 
 
+/*
 #define PINT0
 
 #ifdef PINT
@@ -280,6 +280,7 @@ return 0;
 	uint16_t dist;
     };
 
+*/
 int main(int argc, char **argv) {
 	//return main2(argc, argv);
 //	printf("got %d\n", sizeof(Neighbor));
