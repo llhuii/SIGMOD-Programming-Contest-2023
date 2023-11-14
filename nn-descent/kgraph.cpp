@@ -10,7 +10,7 @@
 //#define SHOW_MEM_SIZE
 #define TopK0
 #define M_SORT0
-#define S__LLH0
+#define S__LLH
 
 
 #ifndef KGRAPH_VERSION
@@ -144,10 +144,10 @@ bool operator< (const Neighbor& s) const {
       for(const auto& z:pool){
         if(mp[z.id >> 1]){
 ++found;
-mp[z.id>>1] = 0;
+//mp[z.id>>1] = 0;
 }
         total --;
-if (total == 0 )break;
+//if (total == 0 )break;
       }
       return 1.0 * found / knn.size();
     }
@@ -372,6 +372,8 @@ if (total == 0 )break;
             float radiusM;
             Neighbors pool;
 
+uint32_t self;
+
             uint32_t L;     // # valid items in the pool,  L + 1 <= pool.size()
             uint32_t M;     // we only join items in pool[0..M)
             bool found;     // helped found new NN in this round
@@ -568,20 +570,21 @@ int size = L;
       return right;
     }
 
-            uint32_t parallel_try_insert_batch(const vector<uint32_t>& id_vec, const float * dist_mat, int my_id){
+            uint32_t parallel_try_insert_batch(const vector<uint32_t>& id_vec, const float * dist_mat){
               LockGuard guard(lock);
               int siz = id_vec.size();
 
               for(uint32_t i = 0; i < siz; i++){
-                if(i == my_id) continue;
+                uint32_t id = id_vec[i];
+                if(id == self ) continue;
 
                 float dist = dist_mat[i];
 
                 if(dist > radius) continue;
 
-                uint32_t id = id_vec[i];
-//                uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
-                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
+		
+                uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
+//                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
 
                 if (l <= L) { // inserted
                   pool[l] = Neighbor((id << 1) | 1, dist);
@@ -715,16 +718,16 @@ hasSet[id] = true; */
               return 0;
             }
 
-            uint32_t parallel_try_insert_batch2(const vector<uint32_t>& id_vec, const float * dist_mat){
+            uint32_t parallel_try_insert_batch2(const Neighbors& candidates){
               LockGuard guard(lock);
-              int siz = id_vec.size();
 
-              for(uint32_t i = 0; i < siz; i++){
-                float dist = dist_mat[i];
+              for(uint32_t i = candidates.size()-1; i >=0; i--){
+ auto cand = candidates[i];
+                float dist = cand.dist;
 		
                 if(dist > radius) continue;
 
-                uint32_t id = id_vec[i];
+                uint32_t id = cand.id;
                 uint32_t l = UpdateKnnListInline0(&pool[0], 
 			id, dist);
                 if (l <= L) { // inserted
@@ -817,6 +820,8 @@ uint32_t N = oracle.size();
  //              nhood.nn_old.reserve(params.R + params.L + 5);
 
                 nhood.nn_new.resize(60);
+
+		nhood.self = n;
                 nhood.pool.resize(params.L+1);
 nhood.LL = params.L;
                 nhood.radius = numeric_limits<float>::max();
@@ -934,7 +939,7 @@ Neighbors		candidates(rows);
 #ifdef TopK
                 nhoods[nn_new[ia]].parallel_try_insert_batch1(nn_old, data, ia+old_size);
 #else
-                nhoods[nn_new[ia]].parallel_try_insert_batch(nn_old, data, ia+old_size);
+                nhoods[nn_new[ia]].parallel_try_insert_batch(nn_old, data);
 #endif
               }
 
@@ -944,11 +949,10 @@ Neighbors		candidates(rows);
 
                 data = B.data();
                 for (size_t ib = 0; ib < old_size; ib++, data += cols) {
-                  uint32_t j = nn_old[ib];
 #ifdef TopK
-                  nhoods[j].parallel_try_insert_batch1(nn_new, data, -1);
+                  nhoods[nn_old[ib]].parallel_try_insert_batch1(nn_new, data, -1);
 #else //TopK
-                  nhoods[j].parallel_try_insert_batch(nn_new, data, -1);
+                  nhoods[nn_old[ib]].parallel_try_insert_batch(nn_new, data);
 #endif
                 }
 
@@ -984,8 +988,10 @@ Neighbors		candidates(rows);
 #endif
 
 		
-              vector<uint32_t>().swap(nhoods[n].nn_new);
               vector<uint32_t>().swap(nhoods[n].nn_old);
+
+              vector<uint32_t>().swap(nhoods[n].nn_new);
+//              nhoods[n].nn_new.resize(0);
 		/* llh
               nn_new.resize(0);
               nn_old.resize(0);
@@ -1170,6 +1176,13 @@ public:
 if (params.controls > 0 )
             GenerateControl(oracle, params.controls, params.K, &controls);
             if (verbosity > 0) cerr << "Initializing..." << endl;
+#ifdef S__LLH
+printf("using s__llh\n");
+#endif
+
+#ifdef M_SORT
+printf("using m_sort\n");
+#endif
             // initialize nhoods
             init();
 
@@ -1265,10 +1278,8 @@ if (params.controls > 0 )
             for (uint32_t n = 0; n < N; ++n) {
               auto const &pool = nhoods[n].pool;
 
-              for (uint32_t k = 0, i = 0; k < 100; ++k, ++i) {
-                uint32_t pool_i_id = pool[i].id >> 1;
-                if(pool_i_id == n) ++i;
-                *b = pool_i_id; b++;
+              for (uint32_t i = 0; i < 100; ++i) {
+                *b++ = pool[i].id >> 1;
               }
             }
 

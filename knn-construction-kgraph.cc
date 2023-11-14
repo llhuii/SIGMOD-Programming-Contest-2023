@@ -117,8 +117,8 @@ int main1(int argc, char **argv) {
 
 	params.S = 100;
 	params.K = 100;
-	params.L=  180;
-	params.R = 295;
+	params.L=  185;
+	params.R = 325;
 	params.iterations= 7;
 
 

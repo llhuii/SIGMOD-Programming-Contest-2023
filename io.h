@@ -129,20 +129,9 @@ void ReadBinEigenColMajor(const std::string &file_path,
   ifs.read((char *)&N, sizeof(uint32_t));
   data = Eigen::MatrixXf(DD, (int)N);
   std::cout << "# of points: " << N << std::endl;
-  const int num_dimensions = DD;
-  std::vector<float> buff(num_dimensions);
-  int counter = 0;
-  while (ifs.read((char *)buff.data(), num_dimensions * sizeof(float))) {
-    for (int d = 0; d < num_dimensions; d++) {
-      //data(d, counter) = int(static_cast<float>(buff[d])*500)/1.0;
-      // data(d, counter) = (static_cast<float>(buff[d])) * 4e3;
-      data(d, counter) = (static_cast<float>(buff[d]));
-    }
-    ++counter;
-  }
+  ifs.read((char*)data.data(), DD * N * sizeof(float));
 
   ifs.close();
-  std::cout << "Finish Reading Data" << endl;
 }
 
 void ReadBinInt(const std::string &file_path,
