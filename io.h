@@ -130,7 +130,6 @@ void ReadBinEigenColMajor(const std::string &file_path,
   data = Eigen::MatrixXf(DD, (int)N);
   std::cout << "# of points: " << N << std::endl;
   ifs.read((char*)data.data(), DD * N * sizeof(float));
-  data *= 1e-1;
 
   ifs.close();
 }

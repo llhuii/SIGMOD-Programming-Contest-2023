@@ -75,23 +75,16 @@ return abs(a - b) < 1e-7;
     using namespace boost;
     using namespace boost::accumulators;
 
-    union floatInt {
-        int32_t I;
-	float dist;
-    };
-
     struct Neighbor {
         uint32_t id;
-	floatInt p;
+        float dist;
 
         Neighbor() {}
 
-        Neighbor(uint32_t i, float d) : id(i) {
-		p.dist = d;
-		p.I|=1;
+        Neighbor(uint32_t i, float d) : id(i), dist(d) {
         }
 bool operator< (const Neighbor& s) const {
-        return p.dist < s.p.dist;
+        return dist < s.dist;
     }
     bool operator == (const Neighbor &s) {
       return (s.id>>1) == (id>>1);
@@ -100,7 +93,7 @@ bool operator< (const Neighbor& s) const {
 
     typedef vector<Neighbor> Neighbors;
 /*
-    static inline bool operator < (Neighbor const &n1, Neighbor const &n2) { return n1.p.dist < n2.p.dist; }
+    static inline bool operator < (Neighbor const &n1, Neighbor const &n2) { return n1.dist < n2.dist; }
     static inline bool operator == (Neighbor const &n1, Neighbor const &n2) {
       return n1.id == n2.id;
     }
@@ -170,8 +163,8 @@ bool operator< (const Neighbor& s) const {
       float sum = 0;
       uint32_t cnt = 0;
       for (uint32_t i = 0; i < m; ++i) {
-        if (knn[i].p.dist > 0) {
-          sum += abs(pool[i].p.dist - knn[i].p.dist) / knn[i].p.dist;
+        if (knn[i].dist > 0) {
+          sum += abs(pool[i].dist - knn[i].dist) / knn[i].dist;
           ++cnt;
         }
       }
@@ -179,7 +172,7 @@ bool operator< (const Neighbor& s) const {
     }
 
     static float EvaluateOneRecall(Neighbors const &pool, Neighbors const &knn) {
-      if (pool[0].p.dist == knn[0].p.dist) return 1.0;
+      if (pool[0].dist == knn[0].dist) return 1.0;
       return 0;
     }
 
@@ -216,18 +209,18 @@ bool operator< (const Neighbor& s) const {
     uint32_t UpdateKnnListHelper(Neighbor* addr, uint32_t size, NeighborT nn) {
 // find the location to insert
       int left = 0, right = size - 1;
-      if (addr[left].p.dist > nn.p.dist) {
+      if (addr[left].dist > nn.dist) {
         memmove((char*)&addr[left + 1], &addr[left], size * sizeof(Neighbor));
         addr[left] = nn;
         return left;
       }
-      if (addr[right].p.dist < nn.p.dist) {
+      if (addr[right].dist < nn.dist) {
         addr[size] = nn;
         return size;
       }
       while (left < right - 1) {
         int mid = (left + right) / 2;
-        if (addr[mid].p.dist > nn.p.dist)
+        if (addr[mid].dist > nn.dist)
           right = mid;
         else
           left = mid;
@@ -235,7 +228,7 @@ bool operator< (const Neighbor& s) const {
       // check equal ID
 
       while (left > 0) {
-        if (addr[left].p.dist < nn.p.dist)
+        if (addr[left].dist < nn.dist)
           break;
         if ( (addr[left].id>>1) == nn.id)
           return size + 1;
@@ -269,7 +262,7 @@ bool operator< (const Neighbor& s) const {
         uint32_t k = 0;
         while (nn.id < N) {
             if (nn.id != i) {
-                nn.p.dist = oracle(i, nn.id);
+                nn.dist = oracle(i, nn.id);
                 UpdateKnnList(&nns[0], k, nn);
                 if (k < K) ++k;
             }
@@ -326,7 +319,7 @@ bool operator< (const Neighbor& s) const {
             if (dist) {
                 if (no_dist) throw runtime_error("distance information is not available");
                 for (uint32_t i = 0; i < v.size(); ++i) {
-                    dist[i] = v[i].p.dist;
+                    dist[i] = v[i].dist;
                 }
             }
         }
@@ -415,7 +408,7 @@ nth_element(pool.begin(), pool.begin()+99,pool.end());
                   pool[l].id = (id<<1)|1;
 //                  if(pool[l].id != (id * 2 + 1))cerr<<"error!!!" <<id <<" "<<pool[l].id <<"\n";
                   if (L + 1 == pool.size()) {
-                    radius = pool[L-1].p.dist;
+                    radius = pool[L-1].dist;
                   }
                   else {
                     ++L;
@@ -428,10 +421,10 @@ nth_element(pool.begin(), pool.begin()+99,pool.end());
     uint32_t HeapAddKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
 
 	    int idx = size, parent;
-	    float dst = nn.p.dist;
+	    float dst = nn.dist;
 	    for(;idx > 0;){
 		  parent  = (idx-1)>>1;
-		 if (dst <= addr[parent].p.dist) {
+		 if (dst <= addr[parent].dist) {
 			 break;
 		 }
 		 addr[idx] = addr[parent];
@@ -445,14 +438,14 @@ nth_element(pool.begin(), pool.begin()+99,pool.end());
     uint32_t HeapUpdateKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
 
 	    int idx = 0, left, right;
-	    float dst = nn.p.dist;
+	    float dst = nn.dist;
 		    left = idx * 2 + 1;
 	    for(;left < size;){
 		    right = left + 1;
-		    if (right < size && addr[right].p.dist > addr[left].p.dist) {
+		    if (right < size && addr[right].dist > addr[left].dist) {
 			    left = right;
 		    }
-		    if (dst >= addr[left].p.dist) break;
+		    if (dst >= addr[left].dist) break;
 		    addr[idx] = addr[left];
 
 		    idx = left;
@@ -466,18 +459,18 @@ nth_element(pool.begin(), pool.begin()+99,pool.end());
 
 inline    uint32_t CustUpdateKnnList(Neighbor* addr, int left, int right, uint32_t size, Neighbor nn) {
       // find the location to insert
-      if (addr[left].p.dist > nn.p.dist) {
+      if (addr[left].dist > nn.dist) {
         memmove((char*)&addr[left + 1], &addr[left], (size-left) * sizeof(Neighbor));
         addr[left] = nn;
         return left;
       }
-      if (addr[right].p.dist < nn.p.dist) {
+      if (addr[right].dist < nn.dist) {
         addr[size] = nn;
         return size;
       }
       while (left < right - 1) {
         int mid = (left + right) / 2;
-        if (addr[mid].p.dist > nn.p.dist)
+        if (addr[mid].dist > nn.dist)
           right = mid;
         else
           left = mid;
@@ -485,7 +478,7 @@ inline    uint32_t CustUpdateKnnList(Neighbor* addr, int left, int right, uint32
       // check equal ID
 
       while (left > 0) {
-        if (addr[left].p.dist < nn.p.dist)
+        if (addr[left].dist < nn.dist)
           break;
         if ( (addr[left].id>>1) == nn.id)
           return size + 1;
@@ -507,13 +500,13 @@ return a - b < -1e-7;
 inline    uint32_t UpdateKnnListInline(Neighbor* addr, uint32_t id, float dist ) {
 	int size = L;
       // find the location to insert
-      if (ltFloat(dist, addr[0].p.dist) ){
+      if (ltFloat(dist, addr[0].dist) ){
         memmove((char*)&addr[1], addr, size * sizeof(Neighbor));
         return 0;
       }
 
 
-      if (!ltFloat(dist, addr[size - 1].p.dist)){ // >= right
+      if (!ltFloat(dist, addr[size - 1].dist)){ // >= right
 
 if ((addr[size-1].id>>1) != id)
         return size;
@@ -525,14 +518,14 @@ return size + 1;
       while (left < right - 1) {
         int mid = (left + right) >> 1;
         
-        if (ltFloat(dist, addr[mid].p.dist))
+        if (ltFloat(dist, addr[mid].dist))
           right = mid;
         else
           left = mid;
       }
 
       while (left >= 0) {
-        if (ltFloat(addr[left].p.dist, dist))
+        if (ltFloat(addr[left].dist, dist))
           break;
         if ( (addr[left].id>>1) == id)
           return size + 1;
@@ -544,36 +537,36 @@ return size + 1;
               (size - right) * sizeof(Neighbor));
       return right;
     }
-inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, int32_t I ) {
+inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist ) {
 int size = L;
 // find the location to insert
-      if (addr[0].p.I  > I) {
+      if (addr[0].dist > dist) {
         memmove((char*)&addr[1], addr, size * sizeof(Neighbor));
         return 0;
       }
- if (addr[size-1].p.I <= I) {
-	         return size + ((addr[size-1].id>>1) == id);
-	}
-
 
       int left = 0, right = size - 1;
+      if (addr[right].dist < dist) {
+        return size;
+      }
       while (left < right - 1) {
         int mid = (left + right)>>1;
-        if (addr[mid].p.I > I)
+        if (addr[mid].dist > dist)
           right = mid;
         else
           left = mid;
       }
       // check equal ID
 
-
-      while (left >= 0) {
-        if (addr[left].p.I < I)
+      while (left > 0) {
+        if (addr[left].dist < dist)
           break;
         if ( (addr[left].id>>1) == id)
           return size + 1;
         left--;
       }
+      if ( (addr[left].id>>1) == id || (addr[right].id>>1) == id)
+        return size + 1;
       memmove((char*)&addr[right + 1],
               &addr[right],
               (size - right) * sizeof(Neighbor));
@@ -595,18 +588,14 @@ int size = L;
 
                 if(dist > radius) continue;
 
-		floatInt p;p.dist = dist;
-
-		p.I|=1;
-
 		
-                uint32_t l = UpdateKnnListInline0(&pool[0], id, p.I);
+                uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
 //                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
 
                 if (l <= L) { // inserted
-                  pool[l] = Neighbor((id << 1) | 1, p.dist);
+                  pool[l] = Neighbor((id << 1) | 1, dist);
                   if (L + 1 == pool.size()) {
-                    radius = pool[L - 1].p.dist;
+                    radius = pool[L - 1].dist;
                   }
                   else {
                     ++L;
@@ -662,7 +651,7 @@ int size = L;
                 if (l <= L) { // inserted
                   pool[l] = Neighbor((id << 1) | 1, dist);
                   if (L + 1 == pool.size()) {
-                    radius = pool[L - 1].p.dist;
+                    radius = pool[L - 1].dist;
                   }
                   else {
                     ++L;
@@ -718,7 +707,7 @@ hasSet[id] = true; */
                 if (l <= L) { // inserted
                   pool[l] = Neighbor((id << 1) | 1, dist);
                   if (L + 1 == pool.size()) {
-                    radius = pool[0].p.dist;
+                    radius = pool[0].dist;
                   }
                   else {
                     ++L;
@@ -740,7 +729,7 @@ hasSet[id] = true; */
 
               for(uint32_t i = candidates.size()-1; i >=0; i--){
  auto cand = candidates[i];
-                float dist = cand.p.dist;
+                float dist = cand.dist;
 		
                 if(dist > radius) continue;
 
@@ -750,7 +739,7 @@ hasSet[id] = true; */
                 if (l <= L) { // inserted
                   pool[l] = Neighbor((id << 1) | 1, dist);
                   if (L + 1 == pool.size()) {
-                    radius = pool[L - 1].p.dist;
+                    radius = pool[L - 1].dist;
                   }
                   else {
                     ++L;
@@ -858,8 +847,7 @@ nhood.LL = params.L;
                         if (random[i] == n) ++i;
                         auto &nn = nhood.pool[l];
                         nn.id = random[i++];
-                        nn.p.dist = oracle(nn.id, n);
-			nn.p.I|=1;
+                        nn.dist = oracle(nn.id, n);
                         nn.id = (nn.id<<1)|1;
 //                        nn.flag = true;
                     }
@@ -868,7 +856,7 @@ nhood.LL = params.L;
                         if (random[i] == n) ++i;
                         auto &nn = nhood.pool[l];
                         nn.id = random[i++];
-                        nn.p.dist = oracle(nn.id, n);
+                        nn.dist = oracle(nn.id, n);
                         nn.id = (nn.id<<1)|1;
 //                        nn.flag = true;
                     }
@@ -1031,7 +1019,7 @@ Neighbors		candidates(rows);
 	int64_t total_inserted = 0, total_moved=0;	
             for (uint32_t n = 0; n < oracle.size(); ++n) {
 
-		    auto d = - nhoods[n].pool[nhoods[n].L-1].p.dist;
+		    auto d = - nhoods[n].pool[nhoods[n].L-1].dist;
 		    if (mxheap.size() > 10 ){
 			    if (d < mxheap.top()) {
 				    mxheap.pop();
@@ -1102,7 +1090,7 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                     nhood.M = l;
                 }
                 BOOST_VERIFY(nhood.M > 0);
-                nhood.radiusM = nhood.pool[nhood.M-1].p.dist;
+                nhood.radiusM = nhood.pool[nhood.M-1].dist;
             }
             // Reset the variables corresponding to the nhoods to be updated
             #pragma omp parallel for simd
@@ -1119,7 +1107,7 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                     auto &nn = nhood.pool[l];
                     auto &nhood_o = nhoods[nn.id>>1];  // nhood on the other side of the edge
                     if (nn.id & 1) {
-                        if (nn.p.dist > nhood_o.radiusM) {
+                        if (nn.dist > nhood_o.radiusM) {
                             LockGuard guard(nhood_o.lock);
                             if(nhood_o.nn_new.size() < params.R)
                               nhood_o.nn_new.push_back(n);
@@ -1130,7 +1118,7 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                         }
                     }
                     else {
-                        if (nn.p.dist > nhood_o.radiusM) {
+                        if (nn.dist > nhood_o.radiusM) {
                             LockGuard guard(nhood_o.lock);
                             if(nhood_o.nn_old.size() < params.R)
                               nhood_o.nn_old.push_back(n);
@@ -1242,8 +1230,8 @@ printf("using m_sort\n");
                     delta(EvaluateDelta(nhood.pool, params.K));
                   }
                   for (auto const &c: controls) {
-                    one_approx(nhoods[c.id].pool[0].p.dist);
-                    one_exact(c.neighbors[0].p.dist);
+                    one_approx(nhoods[c.id].pool[0].dist);
+                    one_exact(c.neighbors[0].dist);
                     one_recall(EvaluateOneRecall(nhoods[c.id].pool, c.neighbors));
                     recall(EvaluateRecall(nhoods[c.id].pool, c.neighbors));
                     accuracy(EvaluateAccuracy(nhoods[c.id].pool, c.neighbors));
@@ -1295,7 +1283,6 @@ printf("using m_sort\n");
 	auto times_start_check = timer.elapsed();
 
 	    int32_t duplicate = 0;
-	    vector<floatInt> diffs; diffs.resize(N);
 
 #ifdef SPECIFIC_TIME
             #pragma omp parallel for default(shared) schedule(dynamic, 100) reduction(+:duplicate)
@@ -1309,55 +1296,25 @@ printf("using m_sort\n");
              uint32_t *data = (uint32_t*)(&pool[0]); 
 	     float pre_dist = -1, dist;
 	      unordered_map<uint32_t, bool> mp;
-	      unordered_map<uint32_t, floatInt> mp_min;
-	      unordered_map<uint32_t, floatInt> mp_max;
 
-	      floatInt maxDiff;
 	     uint32_t pre_id = -1;
               for (uint32_t i = 0, k=0; k < K; ++i) {
 		      uint32_t id = pool[i].id >> 1;
-		      assert(id != n);
-			      auto p = pool[i].p;
-			     // dist = pool[i].p.dist;
+			     // dist = pool[i].dist;
 		      // if (eqFloat(pre_dist, dist) )  {
 		      if (!mp[id]){
 			      mp[id]=true;
-			      mp_min[id]=p;
-			      mp_max[id]=p;
 			      data[k++]=id;
 		      }
 #ifdef SPECIFIC_TIME
-		      else {
-			      if (p.I > mp_max[id].I) {
-				      mp_max[id] = p;
-			      }else if (p.I < mp_min[id].I) {
-				      mp_min[id] = p;
-			      }
-			      auto dist = mp_max[id].dist - mp_min[id].dist;
-			      if (maxDiff.dist < dist) maxDiff.dist = dist;
-			      
-			      duplicate++;
-			      if (duplicate < 3){
-				      printf("%d %f %f %d %d %f\n", duplicate, mp_min[id].dist, mp_max[id].dist, mp_min[id].I, mp_max[id].I, dist);
-			      }
-		      }
+		      else duplicate++;
 #endif
 
 //		pre_dist = dist;
               }
-	      diffs[n] = maxDiff;
-	      
             }
 
-
-
 	    printf("Got duplicate count %d %f\n", duplicate, (timer.elapsed().wall-times_start_check.wall)/1e9);
-	   floatInt maxDiff ;
-	   for(int i=0;i<N;i++) {
-		   if (maxDiff.I < diffs[i].I)maxDiff = diffs[i];
-	   }
-	   printf("Got max diff %.9f %d\n", maxDiff.dist, maxDiff.I);
-
 
             // Save id to knn
 	auto times_start_knng = timer.elapsed();
