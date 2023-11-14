@@ -94,8 +94,8 @@ namespace kgraph {
         static Eigen::VectorXf square_sums;
 
 
-
         std::vector<std::vector<uint32_t> > knng;
+
         /// Indexing parameters.
         struct IndexParams {
             uint32_t iterations; 

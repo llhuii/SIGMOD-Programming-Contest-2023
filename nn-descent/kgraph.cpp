@@ -305,9 +305,13 @@ namespace kgraph {
           Eigen::MatrixXf A2 = square_sums(idA, Eigen::all).transpose();  // (1, na)
           Eigen::MatrixXf B2 = square_sums(idB, Eigen::all);  // (nb, 1)
 
+/*
           D.noalias() =  B * -2 * A;
           D.noalias() += B2 * Eigen::MatrixXf::Ones(1, A2.cols());
           D.noalias() += Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
+*/
+          D.noalias() = B2 * Eigen::MatrixXf::Ones(1, A2.cols()) + Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
+          D.noalias() -=  B * A;
 
           Eigen::internal::set_is_malloc_allowed(true);
           return;
@@ -400,15 +404,9 @@ namespace kgraph {
         size_t n_comps;
 
         void init () {
-            uint32_t N = oracle.size();
-            cout<<"N is "<<N<<"\n";
-            uint32_t seed = params.seed;
-            // [new] Preprocess squared sum
-            cout<<"square sums start to init!\n";
+uint32_t N = oracle.size();
 
-            cout<<"square sums init finished!\n";
-            cout<<"square sums.shape "<<square_sums.rows() <<" "<<square_sums.cols()<<"\n";
-            cout<<"if row-major: "<<square_sums.IsRowMajor<<"\n";
+            uint32_t seed = params.seed;
             mt19937 rng(seed);
             for (auto &nhood: nhoods) {
 //                nhood.nn_new.resize(params.S * 2);
@@ -513,24 +511,12 @@ namespace kgraph {
               size_t data_id = 0;
 
 
-              // Ground Truth for reference
-//              for(size_t ia = 0; ia < cols;ia++){
-//                uint32_t i = nn_new[ia];
-////                for(size_t ib = ia + 1; ib < rows; ib++){
-//                for(size_t ib = 0; ib < rows; ib++){
-//                  if(ib == ia)continue;
-//                  uint32_t j = nn_old[ib];
-//                  float dis = D(ib, ia);
-//                  nhoods[i].parallel_try_insert(j, dis);
-//                }
-//              }
 
               // Batch insert
               for(size_t ia = 0; ia < cols; ia++, data_id += rows) {
                 uint32_t i = nn_new[ia];
                 nhoods[i].parallel_try_insert_batch(nn_old, 0, data + data_id, ia);
               }
-//              if(rows > cols) {
 
 //                Eigen::internal::set_is_malloc_allowed(false);
                 Eigen::MatrixXf B = D.bottomRows(rows - cols).transpose();
@@ -558,7 +544,6 @@ namespace kgraph {
                   uint32_t j = nn_old[ib];
                   nhoods[j].parallel_try_insert_batch(nn_new, 0, dataT + data_id, 10000);
                 }
-//              }
 
 
 
@@ -574,8 +559,14 @@ namespace kgraph {
 #endif
             }
 #ifdef SPECIFIC_TIME
+float maxD = nhoods[0].radius;
+            for (uint32_t n = 1; n < oracle.size(); ++n) {
+
+maxD = max(maxD, nhoods[n].radius);
+        	}
             cout<<"Total dist time is "<<total_dist_time<<"\n";
             cout<<"Total insert time is "<<total_insert_time<<"\n";
+            cout<<"Max radius is "<<maxD<<"\n";
 #endif
 #ifdef DIST_CNT
             n_comps += cc;
@@ -707,11 +698,12 @@ public:
 
             uint32_t N = oracle.size();
 
-            square_sums =  nodes.colwise().squaredNorm();
+            square_sums =  nodes.colwise().squaredNorm()/2;
 	    cout << "get " << square_sums[0] << endl;
             // square_sums *= 1; cout << "get " << square_sums[0] << endl;
             vector<Control> controls;
             if (verbosity > 0) cerr << "Generating control..." << endl;
+if (params.controls > 0 )
             GenerateControl(oracle, params.controls, params.K, &controls);
             if (verbosity > 0) cerr << "Initializing..." << endl;
             // initialize nhoods
@@ -735,7 +727,7 @@ public:
               auto stop_join = chrono::high_resolution_clock::now();
 
 
-              if(!params.if_eval) {
+              if(params.controls < 1) {
                 auto times = timer.elapsed();
                 cerr << "iteration: " << info.iterations<< " time: " << times.wall / 1e9<<"\n";
               }
@@ -788,19 +780,36 @@ public:
                   break;
                 }
               }
-                if(it < params.iterations -1) { // not last loop
-                  update();
-                }
-                // start the clock
-                auto stop_update = chrono::high_resolution_clock::now();
                 // compute the elapsed time
                 auto elapsed_time = chrono::duration_cast<chrono::duration<double>>(stop_join - start_itr);
-                cout << "Join    elapsed: " << elapsed_time.count() << " seconds\n";
+                cout << "Join   elapsed: " << elapsed_time.count() << " seconds\n";
+
+                if(it < params.iterations -1) { // not last loop
+                  update();
+                // start the clock
+                auto stop_update = chrono::high_resolution_clock::now();
 
                 elapsed_time = chrono::duration_cast<chrono::duration<double>>(stop_update - stop_join);
                 cout << "Update  elapsed: " << elapsed_time.count() << " seconds\n";
+                }
             }
             // Save id to knn
+	auto times_start_knng = timer.elapsed();
+
+// reuse matrix memory;
+           uint32_t *b= (uint32_t*)nodes.data();
+            for (uint32_t n = 0; n < N; ++n) {
+              auto const &pool = nhoods[n].pool;
+
+              for (uint32_t k = 0, i = 0; k < 100; ++k, ++i) {
+                uint32_t pool_i_id = pool[i].id >> 1;
+                if(pool_i_id == n) ++i;
+                *b = pool_i_id; b++;
+              }
+            }
+
+
+/*
             knng.resize(N);
             for (uint32_t n = 0; n < N; ++n) {
               auto &knn = knng[n];
@@ -816,6 +825,9 @@ public:
                 knn[k] = pool_i_id;
               }
             }
+*/
+auto times_get_knng =  timer.elapsed();
+	cout << "Copy data time: " << (times_get_knng.wall - times_start_knng.wall) / 1e9 <<"\n";
 
         }
 
