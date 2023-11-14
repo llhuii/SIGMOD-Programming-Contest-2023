@@ -5,7 +5,7 @@
 #define EIGEN_RUNTIME_NO_MALLOC
 
 
-//#define SPECIFIC_TIME
+#define SPECIFIC_TIME
 //#define DIST_CNT
 //#define SHOW_MEM_SIZE
 #define TopK0
@@ -66,6 +66,11 @@
 
 
 namespace kgraph {
+inline bool eqFloat(float a, float b)
+{
+return abs(a - b) < 1e-7;
+}
+
     using namespace std;
     using namespace boost;
     using namespace boost::accumulators;
@@ -1274,30 +1279,54 @@ printf("using m_sort\n");
 
 
 	const int K = params.K;
-	    {
 #ifdef CHECK_UNIQ
 	auto times_start_check = timer.elapsed();
 
 	    int32_t duplicate = 0;
+
+#ifdef SPECIFIC_TIME
             #pragma omp parallel for default(shared) schedule(dynamic, 100) reduction(+:duplicate)
+#else
+              #pragma omp parallel for simd default(shared) schedule(dynamic, 100)
+#endif
             for (uint32_t n = 0; n < N; ++n) {
               auto const &pool = nhoods[n].pool;
 
-      unordered_map<uint32_t, bool> mp;
 
-              for (uint32_t i = 0; i < K; ++i) {
+             uint32_t *data = (uint32_t*)(&pool[0]); 
+	     float pre_dist = -1, dist;
+	      unordered_map<uint32_t, bool> mp;
+
+	     uint32_t pre_id = -1;
+              for (uint32_t i = 0, k=0; k < K; ++i) {
 		      uint32_t id = pool[i].id >> 1;
-		      if (mp[id])  {
-			      duplicate++;
-		      } else {
+			     // dist = pool[i].dist;
+		      // if (eqFloat(pre_dist, dist) )  {
+		      if (!mp[id]){
 			      mp[id]=true;
+			      data[k++]=id;
 		      }
+#ifdef SPECIFIC_TIME
+		      else duplicate++;
+#endif
+
+//		pre_dist = dist;
               }
             }
 
 	    printf("Got duplicate count %d %f\n", duplicate, (timer.elapsed().wall-times_start_check.wall)/1e9);
-#endif
-	    }
+
+            // Save id to knn
+	auto times_start_knng = timer.elapsed();
+
+// reuse matrix memory;
+           uint32_t *data= (uint32_t*)nodes.data();
+            #pragma omp parallel for simd
+            for (uint32_t n = 0; n < N; ++n) {
+              auto const &pool = nhoods[n].pool;
+	      memcpy((char*)(data + n * K), &pool[0], K * 4);
+            }
+#else
             // Save id to knn
 	auto times_start_knng = timer.elapsed();
 
@@ -1314,6 +1343,7 @@ printf("using m_sort\n");
               }
             }
 
+#endif
 
 auto times_get_knng =  timer.elapsed();
 	cerr << "Copy data time: " << (times_get_knng.wall - times_start_knng.wall) / 1e9 <<"\n";

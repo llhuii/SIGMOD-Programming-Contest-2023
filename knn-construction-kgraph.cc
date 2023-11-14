@@ -117,9 +117,9 @@ int main1(int argc, char **argv) {
 
 	params.S = 100;
 	params.K = 100;
-	params.L=  185;
-	params.R = 325;
-	params.iterations= 7;
+	params.L=  200;
+	params.R = 335;
+	params.iterations= 6;
 
 
 	params.recall = 1.0;
@@ -129,7 +129,7 @@ int main1(int argc, char **argv) {
 	  params.controls = 0;
 
 	// 【For local evaluation】
- params.controls= 100;
+// params.controls= 100;
 
            uint32_t *data= (uint32_t*)KGraph::nodes.data();
 	printf("Build starting with S:%d, K:%d, L:%d, R:%d, iter=%d !\n", params.S, params.K, params.L, params.R, params.iterations);
