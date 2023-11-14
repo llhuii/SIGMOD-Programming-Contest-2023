@@ -8,6 +8,9 @@
 //#define SPECIFIC_TIME
 //#define DIST_CNT
 //#define SHOW_MEM_SIZE
+#define TopK0
+#define M_SORT0
+#define S__LLH0
 
 
 #ifndef KGRAPH_VERSION
@@ -37,6 +40,7 @@
 #include <ranges>
 #include <string_view>
 #include <vector>
+#include <map>
  
 
 #include <algorithm>
@@ -59,6 +63,7 @@
 #include <Eigen/Dense>
 #include <bitset>
 
+
 namespace kgraph {
     using namespace std;
     using namespace boost;
@@ -72,20 +77,24 @@ namespace kgraph {
 
         Neighbor(uint32_t i, float d) : id(i), dist(d) {
         }
-    };
-    typedef vector<Neighbor> Neighbors;
-    static inline bool operator < (Neighbor const &n1, Neighbor const &n2) {
-      return n1.dist < n2.dist;
+bool operator< (const Neighbor& s) const {
+        return dist < s.dist;
     }
+    bool operator == (const Neighbor &s) {
+      return (s.id>>1) == (id>>1);
+    }
+    };
+
+    typedef vector<Neighbor> Neighbors;
+/*
+    static inline bool operator < (Neighbor const &n1, Neighbor const &n2) { return n1.dist < n2.dist; }
     static inline bool operator == (Neighbor const &n1, Neighbor const &n2) {
       return n1.id == n2.id;
     }
+*/
 
-
-    typedef vector<Neighbor> Neighbors;
     Eigen::MatrixXf KGraph::nodes;
     Eigen::VectorXf KGraph::square_sums;
-
 
 
 
@@ -131,8 +140,14 @@ namespace kgraph {
       for(const auto& z:knn)
         mp[z.id] = 1;
       uint32_t found = 0;
+   auto   total = knn.size();
       for(const auto& z:pool){
-        if(mp[z.id >> 1])++found;
+        if(mp[z.id >> 1]){
+++found;
+mp[z.id>>1] = 0;
+}
+        total --;
+if (total == 0 )break;
       }
       return 1.0 * found / knn.size();
     }
@@ -186,7 +201,7 @@ namespace kgraph {
     // Come from faiss
     template <typename NeighborT>
     uint32_t UpdateKnnListHelper(Neighbor* addr, uint32_t size, NeighborT nn) {
-      // find the location to insert
+// find the location to insert
       int left = 0, right = size - 1;
       if (addr[left].dist > nn.dist) {
         memmove((char*)&addr[left + 1], &addr[left], size * sizeof(Neighbor));
@@ -219,8 +234,13 @@ namespace kgraph {
               &addr[right],
               (size - right) * sizeof(Neighbor));
       addr[right] = nn;
+//      cout<<addr[right].id<<"  " << ((addr[right].id<<1)|1) <<"\n";
+//      addr[right].id = (addr[right].id<<1)|1;
+//      cout<<"after "<<addr[right].id<<"\n";
       return right;
     }
+
+
 
     static inline uint32_t UpdateKnnList (Neighbor *addr, uint32_t K, Neighbor nn) {
         return UpdateKnnListHelper<Neighbor>(addr, K, nn);
@@ -355,13 +375,20 @@ namespace kgraph {
             uint32_t L;     // # valid items in the pool,  L + 1 <= pool.size()
             uint32_t M;     // we only join items in pool[0..M)
             bool found;     // helped found new NN in this round
+ map<int, bool> hasSet;
+
+uint32_t LL;
             vector<uint32_t> nn_old;
             vector<uint32_t> nn_new;
 
 #ifdef SPECIFIC_TIME
 int64_t total_inserted;
+int64_t total_moved;
 #endif
 
+            void selectTopK() {
+nth_element(pool.begin(), pool.begin()+99,pool.end());
+}
             // only non-readonly method which is supposed to be called in parallel
             uint32_t parallel_try_insert (uint32_t id, float dist) {
                 if (dist > radius) return pool.size();
@@ -386,13 +413,13 @@ int64_t total_inserted;
     uint32_t HeapAddKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
 
 	    int idx = size, parent;
-	    float dst = nn.dest;
+	    float dst = nn.dist;
 	    for(;idx > 0;){
 		  parent  = (idx-1)>>1;
-		 if (dst <= addr[parent].dest) {
+		 if (dst <= addr[parent].dist) {
 			 break;
 		 }
-		 add[idx] = addr[parent];
+		 addr[idx] = addr[parent];
 		 idx = parent;
 	    }
 	    addr[idx] = nn;
@@ -403,26 +430,25 @@ int64_t total_inserted;
     uint32_t HeapUpdateKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
 
 	    int idx = 0, left, right;
-	    float dst = nn.dest;
-	    for(;idx < size;){
+	    float dst = nn.dist;
 		    left = idx * 2 + 1;
+	    for(;left < size;){
 		    right = left + 1;
-		    int largest = idx;
-		    if (left < size && addr[left].dst > dst) {
-			    dst = addr[left].dst;
-			    largest = left;
+		    if (right < size && addr[right].dist > addr[left].dist) {
+			    left = right;
 		    }
-		    if (right < size && addr[right].dst > dst) {
-			    largest = right;
-		    }
-		    if (largest == idx) break;
-		    addr[dst] = addr[largest];
-		    idx = largest;
+		    if (dst >= addr[left].dist) break;
+		    addr[idx] = addr[left];
+
+		    idx = left;
+		    left = idx * 2 + 1;
+
 	    }
 	    addr[idx] = nn;
 	    
 	    return idx;
     }
+
 inline    uint32_t CustUpdateKnnList(Neighbor* addr, int left, int right, uint32_t size, Neighbor nn) {
       // find the location to insert
       if (addr[left].dist > nn.dist) {
@@ -458,19 +484,144 @@ inline    uint32_t CustUpdateKnnList(Neighbor* addr, int left, int right, uint32
       addr[right] = nn;
       return right;
     }
+inline bool ltFloat(float a, float b)
+{
+return a - b < -1e-7;
+}
 
-            uint32_t parallel_try_insert_batch(const vector<uint32_t>& id_vec, uint32_t st_id, const float * dist_mat, uint32_t my_id){
+inline    uint32_t UpdateKnnListInline(Neighbor* addr, uint32_t id, float dist ) {
+	int size = L;
+      // find the location to insert
+      if (ltFloat(dist, addr[0].dist) ){
+        memmove((char*)&addr[1], addr, size * sizeof(Neighbor));
+        return 0;
+      }
+
+
+      if (!ltFloat(dist, addr[size - 1].dist)){ // >= right
+
+if ((addr[size-1].id>>1) != id)
+        return size;
+return size + 1;
+      }
+
+      int left = 0, right = size - 1;
+
+      while (left < right - 1) {
+        int mid = (left + right) >> 1;
+        
+        if (ltFloat(dist, addr[mid].dist))
+          right = mid;
+        else
+          left = mid;
+      }
+
+      while (left >= 0) {
+        if (ltFloat(addr[left].dist, dist))
+          break;
+        if ( (addr[left].id>>1) == id)
+          return size + 1;
+        left--;
+      }
+
+      memmove((char*)&addr[right + 1],
+              &addr[right],
+              (size - right) * sizeof(Neighbor));
+      return right;
+    }
+inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist ) {
+int size = L;
+// find the location to insert
+      if (addr[0].dist > dist) {
+        memmove((char*)&addr[1], addr, size * sizeof(Neighbor));
+        return 0;
+      }
+
+      int left = 0, right = size - 1;
+      if (addr[right].dist < dist) {
+        return size;
+      }
+      while (left < right - 1) {
+        int mid = (left + right)>>1;
+        if (addr[mid].dist > dist)
+          right = mid;
+        else
+          left = mid;
+      }
+      // check equal ID
+
+      while (left > 0) {
+        if (addr[left].dist < dist)
+          break;
+        if ( (addr[left].id>>1) == id)
+          return size + 1;
+        left--;
+      }
+      if ( (addr[left].id>>1) == id || (addr[right].id>>1) == id)
+        return size + 1;
+      memmove((char*)&addr[right + 1],
+              &addr[right],
+              (size - right) * sizeof(Neighbor));
+//      cout<<addr[right].id<<"  " << ((addr[right].id<<1)|1) <<"\n";
+//      addr[right].id = (addr[right].id<<1)|1;
+//      cout<<"after "<<addr[right].id<<"\n";
+      return right;
+    }
+
+            uint32_t parallel_try_insert_batch(const vector<uint32_t>& id_vec, const float * dist_mat, int my_id){
               LockGuard guard(lock);
               int siz = id_vec.size();
 
+              for(uint32_t i = 0; i < siz; i++){
+                if(i == my_id) continue;
+
+                float dist = dist_mat[i];
+
+                if(dist > radius) continue;
+
+                uint32_t id = id_vec[i];
+//                uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
+                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
+
+                if (l <= L) { // inserted
+                  pool[l] = Neighbor((id << 1) | 1, dist);
+                  if (L + 1 == pool.size()) {
+                    radius = pool[L - 1].dist;
+                  }
+                  else {
+                    ++L;
+                  }
+		  
+
+                  found = true;
+
+#ifdef SPECIFIC_TIME
+
+		  total_moved += L - l;
+		  total_inserted ++;
+#endif
+                }
+              }
+              return 0;
+            }
+
+            uint32_t parallel_try_insert_batch_bug(const vector<uint32_t>& id_vec, const float * dist_mat, int my_id){
+              LockGuard guard(lock);
+              int siz = id_vec.size();
+
+//#define W0
+#if W0 == 1
 	      int left = 0, right = L;
 	      int pre_idx = -1;
 	      float pre_dist = -1;
-              for(uint32_t i = st_id; i < siz; i++){
-                if(i == my_id) continue;
+#endif
+              for(uint32_t i = 0; i < siz; i++){
                 float dist = dist_mat[i];
 		
                 if(dist > radius) continue;
+
+                uint32_t id = id_vec[i];
+#if W0 == 1
 		if (dist > pre_dist) {
 			left = pre_idx + 1;
 			right = L- 1;
@@ -479,37 +630,118 @@ inline    uint32_t CustUpdateKnnList(Neighbor* addr, int left, int right, uint32
 			right = pre_idx;
 		}
 
-                uint32_t id = id_vec[i];
-//#define W0 1
-#if W0 == 1
                 uint32_t l = CustUpdateKnnList(&pool[0], 
 				left,
 				right,
 				L, 
 				Neighbor(id, dist));
-#elif W0 == 2
-		float top = pool[0].dist;
-		if (dist >= top && L + 1 == pool.size()) continue;
-                uint32_t l = HeapAddKnnList(&pool[0], 
-				L, 
-				Neighbor(id, dist));
-
 #else
-                uint32_t l = UpdateKnnListHelper<Neighbor>(&pool[0], 
-				L, 
-				Neighbor(id, dist));
+                uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
+
 #endif
                 if (l <= L) { // inserted
-                  pool[l].id = (id << 1) | 1;
+                  pool[l] = Neighbor((id << 1) | 1, dist);
                   if (L + 1 == pool.size()) {
                     radius = pool[L - 1].dist;
                   }
                   else {
                     ++L;
                   }
+		  
+#if W0 == 1
 		  pre_dist = dist; pre_idx = l;
+#endif
+
                   found = true;
+
 #ifdef SPECIFIC_TIME
+
+		  total_moved += L - l;
+		  total_inserted ++;
+#endif
+                }
+              }
+              return 0;
+            }
+
+            uint32_t parallel_try_insert_batch1(const vector<uint32_t>& id_vec, const float * dist_mat, int my_id){
+              LockGuard guard(lock);
+
+// for (int i=0; i < L; i++) { hasSet[pool[i].id>>1] = true; }
+
+
+              int siz = id_vec.size();
+
+float now_radius = radius;
+              for(uint32_t i = 0; i < siz; i++){
+                float dist = dist_mat[i];
+if (i == my_id) continue;
+		
+                if(dist > radius) continue;
+
+                uint32_t id = id_vec[i];
+
+/*if (hasSet.find(id) != hasSet.end()) continue;
+hasSet[id] = true; */
+
+		uint32_t l;
+		if (L + 1 < pool.size()) {
+                l = HeapAddKnnList(&pool[0], 
+				L, 
+				Neighbor(id, dist));
+		} else {
+			l = HeapUpdateKnnList(&pool[0],
+					L, 
+			Neighbor(id, dist));
+		}
+		  
+                if (l <= L) { // inserted
+                  pool[l] = Neighbor((id << 1) | 1, dist);
+                  if (L + 1 == pool.size()) {
+                    radius = pool[0].dist;
+                  }
+                  else {
+                    ++L;
+                  }
+                  found = true;
+}
+}
+
+#ifdef SPECIFIC_TIME
+
+		  //total_moved += L - l;
+		  total_inserted ++;
+#endif
+              return 0;
+            }
+
+            uint32_t parallel_try_insert_batch2(const vector<uint32_t>& id_vec, const float * dist_mat){
+              LockGuard guard(lock);
+              int siz = id_vec.size();
+
+              for(uint32_t i = 0; i < siz; i++){
+                float dist = dist_mat[i];
+		
+                if(dist > radius) continue;
+
+                uint32_t id = id_vec[i];
+                uint32_t l = UpdateKnnListInline0(&pool[0], 
+			id, dist);
+                if (l <= L) { // inserted
+                  pool[l] = Neighbor((id << 1) | 1, dist);
+                  if (L + 1 == pool.size()) {
+                    radius = pool[L - 1].dist;
+                  }
+                  else {
+                    ++L;
+                  }
+		  
+
+                  found = true;
+
+#ifdef SPECIFIC_TIME
+
+		  total_moved += L - l;
 		  total_inserted ++;
 #endif
                 }
@@ -586,6 +818,7 @@ uint32_t N = oracle.size();
 
                 nhood.nn_new.resize(60);
                 nhood.pool.resize(params.L+1);
+nhood.LL = params.L;
                 nhood.radius = numeric_limits<float>::max();
                     Neighbors &pool = nhood.pool;
                     GenRandom(rng, &nhood.nn_new[0], nhood.nn_new.size(), N);
@@ -598,6 +831,7 @@ uint32_t N = oracle.size();
                   // Compute squared dist with for-loop
 //		    Eigen::VectorXf dists(random.size()) ; squared_one_dist(n, random, dists); auto sq = square_sums[n];
 //
+#ifdef TopK
                     for (uint32_t l = 0; l < nhood.L; ++l) {
                         if (random[i] == n) ++i;
                         auto &nn = nhood.pool[l];
@@ -606,7 +840,18 @@ uint32_t N = oracle.size();
                         nn.id = (nn.id<<1)|1;
 //                        nn.flag = true;
                     }
-                    sort(pool.begin(), pool.begin() + nhood.L);
+#else
+                    for (uint32_t l = 0; l < nhood.L; ++l) {
+                        if (random[i] == n) ++i;
+                        auto &nn = nhood.pool[l];
+                        nn.id = random[i++];
+                        nn.dist = oracle(nn.id, n);
+                        nn.id = (nn.id<<1)|1;
+//                        nn.flag = true;
+                    }
+                   sort(pool.begin(), pool.begin() + nhood.L);
+#endif
+//llh
                 }
             }
           auto times = timer.elapsed();
@@ -637,9 +882,8 @@ uint32_t N = oracle.size();
 ////                // step 1. Compute all dist
                 boost::timer::cpu_timer timer;
 
-		nhoods[n].nn_old.insert(nhoods[n].nn_old.begin(), nhoods[n].nn_new.begin(), nhoods[n].nn_new.end() );
-
-                //nn_old.insert(nn_old.begin(), nn_new.begin(), nn_new.end() );
+#ifdef S__LLH
+		nhoods[n].nn_old.insert(nhoods[n].nn_old.end(), nhoods[n].nn_new.begin(), nhoods[n].nn_new.end() );
                 const vector<uint32_t>& nn_new = nhoods[n].nn_new;
                 const vector<uint32_t>& nn_old = nhoods[n].nn_old;
 
@@ -652,42 +896,92 @@ uint32_t N = oracle.size();
 #endif
               float* data = D.data();
               uint32_t cols = D.cols(), rows = D.rows();
-              size_t data_id = 0;
+		int old_size = rows - cols;
+#ifdef M_SORT
+auto		nhoods = &nhoods[n];
+Neighbors		candidates(rows);
+              for(size_t ia = 0; ia < cols; ia++, data += rows) {
+		      int count=0;
+		      for (int i=0;i<rows;i++) {
+			      if (i == ia) {
+				      continue;
+			      }
+			      float d = data[i];
+			      if (d > nhood.radius) {
+				      continue;
+			      }
+			      count++;
+			      candidates[i] = Neighbor(d, nn_old[i]);
+		if (L + 1 < pool.size()) {
+                l = HeapAddKnnList(&pool[0], 
+				L, 
+				Neighbor(id, dist));
+		} else {
+			l = HeapUpdateKnnList(&pool[0],
+					L, 
+			Neighbor(id, dist));
+		}
+		      }
 
+		      
+
+                nhoods[nn_new[ia]].parallel_try_insert_batch2(candidates);
+              }
+#else
               // Batch insert
-              for(size_t ia = 0; ia < cols; ia++, data_id += rows) {
-                uint32_t i = nn_new[ia];
-                nhoods[i].parallel_try_insert_batch(nn_old, 0, data + data_id, ia);
+              for(size_t ia = 0; ia < cols; ia++, data += rows) {
+
+#ifdef TopK
+                nhoods[nn_new[ia]].parallel_try_insert_batch1(nn_old, data, ia+old_size);
+#else
+                nhoods[nn_new[ia]].parallel_try_insert_batch(nn_old, data, ia+old_size);
+#endif
+              }
+
+#endif
+//                Eigen::internal::set_is_malloc_allowed(false);
+                Eigen::MatrixXf B = D.topRows(rows - cols).transpose();
+
+                data = B.data();
+                for (size_t ib = 0; ib < old_size; ib++, data += cols) {
+                  uint32_t j = nn_old[ib];
+#ifdef TopK
+                  nhoods[j].parallel_try_insert_batch1(nn_new, data, -1);
+#else //TopK
+                  nhoods[j].parallel_try_insert_batch(nn_new, data, -1);
+#endif
+                }
+
+#else // S__LLH
+		nhoods[n].nn_old.insert(nhoods[n].nn_old.begin(), nhoods[n].nn_new.begin(), nhoods[n].nn_new.end() );
+
+                const vector<uint32_t>& nn_new = nhoods[n].nn_new;
+                const vector<uint32_t>& nn_old = nhoods[n].nn_old;
+
+                Eigen::MatrixXf D(nn_old.size(), nn_new.size());
+                squared_dist(nn_new, nn_old, D);
+
+#ifdef SPECIFIC_TIME
+                auto times = timer.elapsed();
+                total_dist_time += (times.wall / 1e9);
+#endif
+              float* data = D.data();
+              uint32_t cols = D.cols(), rows = D.rows();
+              // Batch insert
+              for(size_t ia = 0; ia < cols; ia++, data += rows) {
+                nhoods[nn_old[ia]].parallel_try_insert_batch(nn_old, data, ia);
               }
 
 //                Eigen::internal::set_is_malloc_allowed(false);
                 Eigen::MatrixXf B = D.bottomRows(rows - cols).transpose();
-//                D = D.bottomRows(rows - cols).transpose();
 
-
-//                D = D.bottomRows(rows - cols);
-//                D.transposeInPlace();
-//                Eigen::internal::set_is_malloc_allowed(true);
-
-                // Ground Truth for reference
-//              for(size_t ib=cols; ib < rows; ib++){
-//                uint32_t j = nn_old[ib];
-//                for(size_t ia = 0; ia<cols;ia++){
-//                  uint32_t i = nn_new[ia];
-//                  float dis = D(ia, ib);
-//                  nhoods[j].parallel_try_insert(i, dis);
-//                }
-//              }
-
-                float *dataT = B.data();
-//              data_id = cols * cols;
-                data_id = 0;
-                for (size_t ib = cols; ib < rows; ib++, data_id += cols) {
+                data = B.data();
+                for (size_t ib = cols; ib < rows; ib++, data += cols) {
                   uint32_t j = nn_old[ib];
-                  nhoods[j].parallel_try_insert_batch(nn_new, 0, dataT + data_id, 10000);
+                  nhoods[j].parallel_try_insert_batch(nn_new, data, 10000);
                 }
 
-
+#endif
 
 		
               vector<uint32_t>().swap(nhoods[n].nn_new);
@@ -710,7 +1004,7 @@ uint32_t N = oracle.size();
                 boost::timer::cpu_timer timer;
 
 		std::priority_queue<float> mxheap;
-	int64_t total_inserted = 0;	
+	int64_t total_inserted = 0, total_moved=0;	
             for (uint32_t n = 0; n < oracle.size(); ++n) {
 
 		    auto d = - nhoods[n].pool[nhoods[n].L-1].dist;
@@ -725,13 +1019,15 @@ uint32_t N = oracle.size();
 		    }
 		    total_inserted += nhoods[n].total_inserted;
 nhoods[n].total_inserted = 0;
+		    total_moved += nhoods[n].total_moved;
+nhoods[n].total_moved = 0;
 
-//maxD = max(maxD, );
         	}
                 auto new_times = timer.elapsed();
             cerr<<"max radius time is "<<new_times.wall/1e9<<"\n";
 	    list_pq(mxheap, 10);
             cerr<<"total inserted "<<total_inserted<<"\n";
+            cerr<<"total moved "<<total_moved<<"\n";
 
 }
             cerr<<"Total dist time is "<<total_dist_time<<"\n";
@@ -743,7 +1039,8 @@ nhoods[n].total_inserted = 0;
             printf("total_found: %u\n",total_found);
 #endif
         }
-template<typename T>
+
+	template<typename T>
 void list_pq(std::priority_queue<T> pq, size_t count = 5)
 {
 	size_t n {count};
@@ -757,7 +1054,6 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
 	}
 	std::cerr << std::endl;
 }
-
 
         void update () {
             uint32_t N = oracle.size();
@@ -832,15 +1128,16 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
 
                 for (uint32_t l = 0; l < nhood.M; ++l) {
                     auto &nn = nhood.pool[l];
-                    
-			if (nn.id&1) {
-				nn_new.push_back(nn.id>>1);
-				nn.id ^= 1;
-			}else{
-				nn_old.push_back(nn.id>>1);
-			}
-		}
+
+                        if (nn.id&1) {
+                                nn_new.push_back(nn.id>>1);
+                                nn.id ^= 1;
+                        }else{
+                                nn_old.push_back(nn.id>>1);
+                        }
+                }
             }
+
 #ifdef SHOW_MEM_SIZE
             uint32_t nhood_size        = sizeof(nhoods[0]);
             uint32_t nhood_pool_size   = sizeof(nhoods[0].pool[0]) * nhoods[0].pool.size();
@@ -976,23 +1273,6 @@ if (params.controls > 0 )
             }
 
 
-/*
-            knng.resize(N);
-            for (uint32_t n = 0; n < N; ++n) {
-              auto &knn = knng[n];
-              auto const &pool = nhoods[n].pool;
-              uint32_t K = 100;
-              knn.resize(K);
-
-              uint32_t  i = 0;
-
-              for (uint32_t k = 0; k < K; ++k, ++i) {
-                uint32_t pool_i_id = pool[i].id >> 1;
-                if(pool_i_id == n) ++i;
-                knn[k] = pool_i_id;
-              }
-            }
-*/
 auto times_get_knng =  timer.elapsed();
 	cerr << "Copy data time: " << (times_get_knng.wall - times_start_knng.wall) / 1e9 <<"\n";
 

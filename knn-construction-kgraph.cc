@@ -97,6 +97,8 @@ int main1(int argc, char **argv) {
 	// Read data points
 	//  ReadBinEigen(source_path, KGraph::nodes);   // Eigen version
 	ReadBinEigenColMajor(source_path, KGraph::nodes);   // Eigen version
+	auto times_load = timer.elapsed();
+	std::cerr <<"Load data finished in " << (times_load.wall/1e9) << endl;
 
 
 	cout<<KGraph::nodes.cols()<<"\n";
@@ -117,7 +119,7 @@ int main1(int argc, char **argv) {
 	params.K = 100;
 	params.L=  180;
 	params.R = 295;
-	params.iterations= 9;
+	params.iterations= 7;
 
 
 	params.recall = 1.0;
@@ -136,7 +138,7 @@ int main1(int argc, char **argv) {
 
 	auto times_build = timer.elapsed();
 	printf("Build finished S:%d, K:%d, L:%d, R:%d !\n", params.S, params.K, params.L, params.R);
-	std::cerr << "Build time: " << times_build.wall / 1e9 <<"\n";
+	std::cerr << "Build time: " << (times_build.wall - times_load.wall)/ 1e9 <<"\n";
 
 	// Save to ouput.bin
 	// SaveKNNG(index->knng);

@@ -6,7 +6,7 @@ LFLAGS = -std=c++11 -O3 $(OPTION)  -L$(MKLROOT)/lib/intel64 -lmkl_intel_lp64 -lm
 
 all: knng
 
-knng : knn-construction-kgraph.cc
+knng : knn-construction-kgraph.cc io.h
 	$(CC) $(LFLAGS) knn-construction-kgraph.cc -o $@ -lkgraph -lboost_timer -lmkl_intel_lp64 -lmkl_core -lmkl_gnu_thread -lpthread -lm -ldl
 
 

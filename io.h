@@ -135,6 +135,7 @@ void ReadBinEigenColMajor(const std::string &file_path,
   while (ifs.read((char *)buff.data(), num_dimensions * sizeof(float))) {
     for (int d = 0; d < num_dimensions; d++) {
       //data(d, counter) = int(static_cast<float>(buff[d])*500)/1.0;
+      // data(d, counter) = (static_cast<float>(buff[d])) * 4e3;
       data(d, counter) = (static_cast<float>(buff[d]));
     }
     ++counter;
