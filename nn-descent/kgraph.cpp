@@ -30,6 +30,15 @@
 #include <iostream>
 #include <fstream>
 #include <random>
+#include <concepts>
+#include <functional>
+#include <iostream>
+#include <queue>
+#include <ranges>
+#include <string_view>
+#include <vector>
+ 
+
 #include <algorithm>
 #include <boost/timer/timer.hpp>
 #define timer timer_for_boost_progress_t
@@ -302,16 +311,24 @@ namespace kgraph {
           Eigen::MatrixXf A = nodes(Eigen::all, idA); // (100, na)
           Eigen::MatrixXf B = nodes(Eigen::all, idB).transpose(); // (nb, 100)
           // get square sum
+	  /*
           Eigen::MatrixXf A2 = square_sums(idA, Eigen::all).transpose();  // (1, na)
           Eigen::MatrixXf B2 = square_sums(idB, Eigen::all);  // (nb, 1)
 
+          D.noalias() = B2 * Eigen::MatrixXf::Ones(1, A2.cols()) + Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
+          D.noalias() -=  B * A;
+	*/
 /*
           D.noalias() =  B * -2 * A;
           D.noalias() += B2 * Eigen::MatrixXf::Ones(1, A2.cols());
           D.noalias() += Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
-*/
-          D.noalias() = B2 * Eigen::MatrixXf::Ones(1, A2.cols()) + Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
-          D.noalias() -=  B * A;
+	  */
+          D.noalias() =  -B * A;
+ //         Eigen::VectorXf A2 = square_sums(idA).transpose();  // (1, na)
+//          Eigen::VectorXf B2 = square_sums(idB);  // (nb, 1)
+          D.colwise() += square_sums(idB);
+         // D.colwise() += square_sums(idA);
+          D.rowwise() += square_sums(idA).transpose();
 
           Eigen::internal::set_is_malloc_allowed(true);
           return;
@@ -327,9 +344,11 @@ namespace kgraph {
             float radius;   // distance of interesting range
             float radiusM;
             Neighbors pool;
+
             uint32_t L;     // # valid items in the pool,  L + 1 <= pool.size()
             uint32_t M;     // we only join items in pool[0..M)
             bool found;     // helped found new NN in this round
+int64_t total_inserted;
             vector<uint32_t> nn_old;
             vector<uint32_t> nn_new;
             vector<uint32_t> rnn_old;
@@ -363,7 +382,33 @@ namespace kgraph {
               for(uint32_t i = st_id; i < siz; i++){
                 if(i == my_id) continue;
                 float dist = dist_mat[i];
-		// if (dist > 5300) continue;
+//		 if (dist > 80) continue;
+
+                if(dist > radius) continue;
+                uint32_t id = id_vec[i];
+                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
+                if (l <= L) { // inserted
+                  pool[l].id = (id << 1) | 1;
+                  if (L + 1 == pool.size()) {
+                    radius = pool[L - 1].dist;
+                  }
+                  else {
+                    ++L;
+                  }
+                  found = true;
+		  total_inserted ++;
+                }
+              }
+              return 0;
+            }
+            uint32_t parallel_try_insert_batch1(const vector<uint32_t>& id_vec, uint32_t st_id, const float * dist_mat, uint32_t my_id){
+              LockGuard guard(lock);
+              int siz = id_vec.size();
+
+              for(uint32_t i = st_id; i < siz; i++){
+                if(i == my_id) continue;
+                float dist = dist_mat[i];
+		 if (dist > 5300) continue;
 
                 if(dist > radius) continue;
                 uint32_t id = id_vec[i];
@@ -384,7 +429,7 @@ namespace kgraph {
 
             // join should not be conflict with insert
             template <typename C>
-            void join (C callback) const {
+            void join1 (C callback) const {
                 for (uint32_t const i: nn_new) {
                     for (uint32_t const j: nn_new) {
                         if (i < j) {
@@ -410,9 +455,8 @@ uint32_t N = oracle.size();
             uint32_t seed = params.seed;
             mt19937 rng(seed);
             for (auto &nhood: nhoods) {
-//                nhood.nn_new.resize(params.S * 2);
+                nhood.nn_new.resize(params.S * 2);
 //                nhood.nn_new.resize(params.S );
-                nhood.nn_new.resize(60);        // TODO: change back to params.S
                 nhood.pool.resize(params.L+1);
                 nhood.radius = numeric_limits<float>::max();
             }
@@ -560,14 +604,36 @@ uint32_t N = oracle.size();
 #endif
             }
 #ifdef SPECIFIC_TIME
-float maxD = nhoods[0].radius;
-            for (uint32_t n = 1; n < oracle.size(); ++n) {
+{
+                boost::timer::cpu_timer timer;
 
-maxD = max(maxD, nhoods[n].radius);
+		std::priority_queue<float> mxheap;
+	int64_t total_inserted = 0;	
+            for (uint32_t n = 0; n < oracle.size(); ++n) {
+
+		    auto d = - nhoods[n].pool[nhoods[n].L-1].dist;
+		    if (mxheap.size() > 10 ){
+			    if (d < mxheap.top()) {
+				    mxheap.pop();
+				    mxheap.emplace(d);
+			    }
+		    }
+		    else {
+			    mxheap.push(d);
+		    }
+		    total_inserted += nhoods[n].total_inserted;
+nhoods[n].total_inserted = 0;
+
+//maxD = max(maxD, );
         	}
+                auto new_times = timer.elapsed();
+            cout<<"max radius time is "<<new_times.wall/1e9<<"\n";
+	    list_pq(mxheap, 10);
+            cout<<"total inserted "<<total_inserted<<"\n";
+
+}
             cout<<"Total dist time is "<<total_dist_time<<"\n";
             cout<<"Total insert time is "<<total_insert_time<<"\n";
-            cout<<"Max radius is "<<maxD<<"\n";
 #endif
 #ifdef DIST_CNT
             n_comps += cc;
@@ -575,6 +641,20 @@ maxD = max(maxD, nhoods[n].radius);
             printf("total_found: %u\n",total_found);
 #endif
         }
+template<typename T>
+void list_pq(std::priority_queue<T> pq, size_t count = 5)
+{
+	size_t n {count};
+	while (!pq.empty())
+	{
+		std::cout << pq.top() << " ";
+		pq.pop();
+		if (--n) continue;
+		std::cout << std::endl;
+		n = count;
+	}
+	std::cout << std::endl;
+}
 
 
         void update () {
@@ -700,7 +780,6 @@ public:
             uint32_t N = oracle.size();
 
             square_sums =  nodes.colwise().squaredNorm()/2;
-	    cout << "get " << square_sums[0] << endl;
             // square_sums *= 1; cout << "get " << square_sums[0] << endl;
             vector<Control> controls;
             if (verbosity > 0) cerr << "Generating control..." << endl;
@@ -843,4 +922,5 @@ auto times_get_knng =  timer.elapsed();
         return new KGraphImpl;
     }
 }
+
 

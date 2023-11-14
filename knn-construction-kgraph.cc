@@ -59,7 +59,6 @@ const int K = 100;
 typedef float ResultType;
 
 
-
 // 【Eigen dist】
 float compare(const MyType& a, const MyType& b) {
 	//  return ((a - b)*(a - b).transpose())(0,0);
@@ -117,7 +116,7 @@ int main1(int argc, char **argv) {
 	params.S = 100;
 	params.K = 100;
 	params.L=  165;
-	params.R = 254;
+	params.R = 251;
 	params.iterations= 7;
 
 
@@ -131,8 +130,7 @@ int main1(int argc, char **argv) {
 // params.controls= 100;
 
            uint32_t *data= (uint32_t*)KGraph::nodes.data();
-	printf("Build starting with S: %d, K :%d, L: %d, R:%d !\n", params.S, params.K, params.L, params.R);
-printf("data %p\n", data);
+	printf("Build starting with S: %d, K: %d, L: %d, R:%d !\n", params.S, params.K, params.L, params.R);
 
 	index->build(oracle, params);
 
@@ -276,9 +274,14 @@ int perfIntTest()
 
 return 0;
 }
+    struct Neighbor {
+        uint32_t id;
+	uint16_t dist;
+    };
 
 int main(int argc, char **argv) {
 	//return main2(argc, argv);
+//	printf("got %d\n", sizeof(Neighbor));
 return main1(argc, argv);
 //	perfIntTest();
 }
