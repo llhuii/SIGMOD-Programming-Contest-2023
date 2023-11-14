@@ -67,8 +67,14 @@ float compare(const MyType& a, const MyType& b) {
 
 // 【Eigen dist id】
 float compare_with_id(const MyType& a, const MyType& b, uint32_t id_a, uint32_t id_b) {
-	//return -100;
-	return -((KGraph::square_sums(id_a, Eigen::all) + KGraph::square_sums(id_b, Eigen::all) - (((a.transpose()) * b)))(0,0));
+	//  return (urn ((a - b)*(a - b).transpose())(0,0);
+	//  return ((a - b).transpose() *(a-b))(0,0);
+	//  Eigen::MatrixXf tmp = (- 2 * (a.transpose()) * b);
+	//  cout<<KGraph::square_sums.size() <<" "<<KGraph::square_sums.rows() <<" "<<KGraph::square_sums.cols()<<"\n";
+	//  float ret = KGraph::square_sums(id_a, 0);
+	//  float ret = KGraph::square_sums(id_a, 0) + KGraph::square_sums(id_b, 0) -2 * (a.transpose()) * b)(0,0);
+	//  return ret;
+	return (KGraph::square_sums(id_a, Eigen::all) + KGraph::square_sums(id_b, Eigen::all) - (((a.transpose()) * b)))(0,0);
 }
 
 
@@ -92,7 +98,7 @@ int main1(int argc, char **argv) {
 	//  ReadBinEigen(source_path, KGraph::nodes);   // Eigen version
 	ReadBinEigenColMajor(source_path, KGraph::nodes);   // Eigen version
 	auto times_load = timer.elapsed();
-	std::cerr <<"load data finished in " << (times_load.wall/1e9) << endl;
+	std::cerr <<"Load data finished in " << (times_load.wall/1e9) << endl;
 
 
 	cout<<KGraph::nodes.cols()<<"\n";
@@ -111,8 +117,8 @@ int main1(int argc, char **argv) {
 
 	params.S = 100;
 	params.K = 100;
-	params.L=  180;
-	params.R = 295;
+	params.L=  185;
+	params.R = 325;
 	params.iterations= 7;
 
 

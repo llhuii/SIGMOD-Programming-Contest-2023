@@ -77,8 +77,8 @@ namespace kgraph {
 
         Neighbor(uint32_t i, float d) : id(i), dist(d) {
         }
-bool operator> (const Neighbor& s) const {
-        return dist > s.dist;
+bool operator< (const Neighbor& s) const {
+        return dist < s.dist;
     }
     bool operator == (const Neighbor &s) {
       return (s.id>>1) == (id>>1);
@@ -203,18 +203,18 @@ bool operator> (const Neighbor& s) const {
     uint32_t UpdateKnnListHelper(Neighbor* addr, uint32_t size, NeighborT nn) {
 // find the location to insert
       int left = 0, right = size - 1;
-      if (addr[left].dist < nn.dist) {
+      if (addr[left].dist > nn.dist) {
         memmove((char*)&addr[left + 1], &addr[left], size * sizeof(Neighbor));
         addr[left] = nn;
         return left;
       }
-      if (addr[right].dist > nn.dist) {
+      if (addr[right].dist < nn.dist) {
         addr[size] = nn;
         return size;
       }
       while (left < right - 1) {
         int mid = (left + right) / 2;
-        if (addr[mid].dist < nn.dist)
+        if (addr[mid].dist > nn.dist)
           right = mid;
         else
           left = mid;
@@ -222,7 +222,7 @@ bool operator> (const Neighbor& s) const {
       // check equal ID
 
       while (left > 0) {
-        if (addr[left].dist > nn.dist)
+        if (addr[left].dist < nn.dist)
           break;
         if ( (addr[left].id>>1) == nn.id)
           return size + 1;
@@ -298,9 +298,27 @@ bool operator> (const Neighbor& s) const {
 
 
         virtual void build (IndexOracle const &oracle, IndexParams const &param, IndexInfo *info);
+
+
+        virtual void get_nn (uint32_t id, uint32_t *nns, float *dist, uint32_t *pM, uint32_t *pL) const {
+            if (!(id < graph.size())) throw invalid_argument("id too big");
+            auto const &v = graph[id];
+            *pM = M[id];
+            *pL = v.size();
+            if (nns) {
+                for (uint32_t i = 0; i < v.size(); ++i) {
+                    nns[i] = v[i].id;
+                }
+            }
+            if (dist) {
+                if (no_dist) throw runtime_error("distance information is not available");
+                for (uint32_t i = 0; i < v.size(); ++i) {
+                    dist[i] = v[i].dist;
+                }
+            }
+        }
+
     };
-
-
     class KGraphConstructor: public KGraphImpl {
 
 
@@ -322,13 +340,12 @@ bool operator> (const Neighbor& s) const {
           D.noalias() += B2 * Eigen::MatrixXf::Ones(1, A2.cols());
           D.noalias() += Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
 	  */
-          D.noalias() = -B * A;
+          D.noalias() =  -B * A;
  //         Eigen::VectorXf A2 = square_sums(idA).transpose();  // (1, na)
 //          Eigen::VectorXf B2 = square_sums(idB);  // (nb, 1)
           D.colwise() += square_sums(idB);
          // D.colwise() += square_sums(idA);
           D.rowwise() += square_sums(idA).transpose();
-	  D *=-1;
 
           Eigen::internal::set_is_malloc_allowed(true);
           return;
@@ -372,8 +389,28 @@ int64_t total_moved;
 #endif
 
             void selectTopK() {
-// nth_element(pool.begin(), pool.begin()+99,pool.end());
+nth_element(pool.begin(), pool.begin()+99,pool.end());
 }
+            // only non-readonly method which is supposed to be called in parallel
+            uint32_t parallel_try_insert (uint32_t id, float dist) {
+                if (dist > radius) return pool.size();
+                LockGuard guard(lock);
+                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
+
+                if (l <= L) { // inserted
+//                  if(pool[l].id != (id * 2 + 1))cerr<<"error!!!" <<id <<" "<<pool[l].id <<"\n";
+                  pool[l].id = (id<<1)|1;
+//                  if(pool[l].id != (id * 2 + 1))cerr<<"error!!!" <<id <<" "<<pool[l].id <<"\n";
+                  if (L + 1 == pool.size()) {
+                    radius = pool[L-1].dist;
+                  }
+                  else {
+                    ++L;
+                  }
+                  found = true;
+                }
+                return l;
+            }
 
     uint32_t HeapAddKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
 
@@ -497,18 +534,18 @@ return size + 1;
 inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist ) {
 int size = L;
 // find the location to insert
-      if (addr[0].dist < dist) {
+      if (addr[0].dist > dist) {
         memmove((char*)&addr[1], addr, size * sizeof(Neighbor));
         return 0;
       }
-      if (dist < addr[size-1].dist) {
-        return size;
-      }
 
       int left = 0, right = size - 1;
+      if (addr[right].dist < dist) {
+        return size;
+      }
       while (left < right - 1) {
         int mid = (left + right)>>1;
-        if (addr[mid].dist < dist)
+        if (addr[mid].dist > dist)
           right = mid;
         else
           left = mid;
@@ -516,7 +553,7 @@ int size = L;
       // check equal ID
 
       while (left > 0) {
-        if (addr[left].dist > dist)
+        if (addr[left].dist < dist)
           break;
         if ( (addr[left].id>>1) == id)
           return size + 1;
@@ -542,12 +579,12 @@ int size = L;
                 if(id == self ) continue;
 
                 float dist = dist_mat[i];
-                if(dist > 0) continue;
 
-                if(dist < radius) continue;
+                if(dist > radius) continue;
 
 		
                 uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
+//                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
 
                 if (l <= L) { // inserted
                   pool[l] = Neighbor((id << 1) | 1, dist);
@@ -787,8 +824,7 @@ uint32_t N = oracle.size();
 		nhood.self = n;
                 nhood.pool.resize(params.L+1);
 nhood.LL = params.L;
-               // nhood.radius = numeric_limits<float>::max();
-                nhood.radius = numeric_limits<float>::min();
+                nhood.radius = numeric_limits<float>::max();
                     Neighbors &pool = nhood.pool;
                     GenRandom(rng, &nhood.nn_new[0], nhood.nn_new.size(), N);
                     GenRandom(rng, &random[0], random.size(), N);
@@ -818,17 +854,13 @@ nhood.LL = params.L;
                         nn.id = (nn.id<<1)|1;
 //                        nn.flag = true;
                     }
-                   //sort(pool.begin(), pool.begin() + nhood.L);
-                   sort(pool.begin(), pool.begin() + nhood.L, greater<Neighbor>());
+                   sort(pool.begin(), pool.begin() + nhood.L);
 #endif
 //llh
                 }
             }
           auto times = timer.elapsed();
-	  // debug
-	for (int i=0; i< 10;i++)
-		printf("got %f ", nhoods[9].pool[99-i].dist);
-          cerr << "Init0:  time: " << times.wall / 1e9<<"\n";
+          cerr << "Init:  time: " << times.wall / 1e9<<"\n";
 
         }
         void join () {
@@ -1224,10 +1256,6 @@ printf("using m_sort\n");
                   info.stop_condition = IndexInfo::RECALL;
                   break;
                 }
-		// debug
-	for (int i=0; i< 10;i++){
-		printf("got %f ", nhoods[9].pool[99-i].dist);
-	}
               }
                 // compute the elapsed time
                 auto elapsed_time = chrono::duration_cast<chrono::duration<double>>(stop_join - start_itr);
@@ -1242,7 +1270,6 @@ printf("using m_sort\n");
                 cerr << "Update  elapsed: " << elapsed_time.count() << " seconds\n";
                 }
             }
-
             // Save id to knn
 	auto times_start_knng = timer.elapsed();
 

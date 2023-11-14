@@ -168,6 +168,29 @@ namespace kgraph {
         /// Constructor.
         static KGraph *create ();
 
+        /// Get offline computed k-NNs of a given object.
+        /**
+         * See the full version of get_nn.
+         */
+        virtual void get_nn (uint32_t id, uint32_t *nns, uint32_t *M, uint32_t *L) const {
+            get_nn(id, nns, nullptr, M, L);
+        }
+        /// Get offline computed k-NNs of a given object.
+        /**
+         * The user must provide space to save IndexParams::L values.
+         * The actually returned L could be smaller than IndexParams::L, and
+         * M <= L is the number of neighbors KGraph thinks
+         * could be most useful for online search, and is usually < L.
+         * If the index has been pruned, the returned L could be smaller than
+         * IndexParams::L used to construct the index.
+         *
+         * @params id Object ID whose neighbor information are returned.
+         * @params nns Neighbor IDs, must have space to save IndexParams::L values. 
+         * @params dists Distance values, must have space to save IndexParams::L values.
+         * @params M Useful number of neighbors, output only.
+         * @params L Actually returned number of neighbors, output only.
+         */
+        virtual void get_nn (uint32_t id, uint32_t *nns, float *dists, uint32_t *M, uint32_t *L) const = 0;
 
     };
 }
