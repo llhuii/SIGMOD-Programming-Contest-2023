@@ -11,6 +11,7 @@
 #define TopK0
 #define M_SORT0
 #define S__LLH
+#define CHECK_UNIQ
 
 
 #ifndef KGRAPH_VERSION
@@ -340,12 +341,12 @@ bool operator< (const Neighbor& s) const {
           D.noalias() += B2 * Eigen::MatrixXf::Ones(1, A2.cols());
           D.noalias() += Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
 	  */
-          D.noalias() =  -B * A;
+          D.colwise() = square_sums(idB);
+          D.rowwise() += square_sums(idA).transpose();
+          D.noalias() -=  B * A;
  //         Eigen::VectorXf A2 = square_sums(idA).transpose();  // (1, na)
 //          Eigen::VectorXf B2 = square_sums(idB);  // (nb, 1)
-          D.colwise() += square_sums(idB);
          // D.colwise() += square_sums(idA);
-          D.rowwise() += square_sums(idA).transpose();
 
           Eigen::internal::set_is_malloc_allowed(true);
           return;
@@ -1177,7 +1178,7 @@ if (params.controls > 0 )
             GenerateControl(oracle, params.controls, params.K, &controls);
             if (verbosity > 0) cerr << "Initializing..." << endl;
 #ifdef S__LLH
-printf("using s__llh\n");
+printf("using s__llh new\n");
 #endif
 
 #ifdef M_SORT
@@ -1270,15 +1271,45 @@ printf("using m_sort\n");
                 cerr << "Update  elapsed: " << elapsed_time.count() << " seconds\n";
                 }
             }
+
+
+	const int K = params.K;
+	    {
+#ifdef CHECK_UNIQ
+	auto times_start_check = timer.elapsed();
+
+	    int32_t duplicate = 0;
+            #pragma omp parallel for default(shared) schedule(dynamic, 100) reduction(+:duplicate)
+            for (uint32_t n = 0; n < N; ++n) {
+              auto const &pool = nhoods[n].pool;
+
+      unordered_map<uint32_t, bool> mp;
+
+              for (uint32_t i = 0; i < K; ++i) {
+		      uint32_t id = pool[i].id >> 1;
+		      if (mp[id])  {
+			      duplicate++;
+		      } else {
+			      mp[id]=true;
+		      }
+              }
+            }
+
+	    printf("Got duplicate count %d %f\n", duplicate, (timer.elapsed().wall-times_start_check.wall)/1e9);
+#endif
+	    }
             // Save id to knn
 	auto times_start_knng = timer.elapsed();
 
 // reuse matrix memory;
-           uint32_t *b= (uint32_t*)nodes.data();
+           uint32_t *data= (uint32_t*)nodes.data();
+            #pragma omp parallel for simd
             for (uint32_t n = 0; n < N; ++n) {
+	      uint32_t *b = data + n * K;
               auto const &pool = nhoods[n].pool;
 
-              for (uint32_t i = 0; i < 100; ++i) {
+
+              for (uint32_t i = 0; i < K; ++i) {
                 *b++ = pool[i].id >> 1;
               }
             }
