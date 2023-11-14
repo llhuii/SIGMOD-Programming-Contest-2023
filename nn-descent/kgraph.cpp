@@ -383,18 +383,122 @@ int64_t total_inserted;
                 return l;
             }
 
+    uint32_t HeapAddKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
+
+	    int idx = size, parent;
+	    float dst = nn.dest;
+	    for(;idx > 0;){
+		  parent  = (idx-1)>>1;
+		 if (dst <= addr[parent].dest) {
+			 break;
+		 }
+		 add[idx] = addr[parent];
+		 idx = parent;
+	    }
+	    addr[idx] = nn;
+	    
+	    return idx;
+    }
+
+    uint32_t HeapUpdateKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
+
+	    int idx = 0, left, right;
+	    float dst = nn.dest;
+	    for(;idx < size;){
+		    left = idx * 2 + 1;
+		    right = left + 1;
+		    int largest = idx;
+		    if (left < size && addr[left].dst > dst) {
+			    dst = addr[left].dst;
+			    largest = left;
+		    }
+		    if (right < size && addr[right].dst > dst) {
+			    largest = right;
+		    }
+		    if (largest == idx) break;
+		    addr[dst] = addr[largest];
+		    idx = largest;
+	    }
+	    addr[idx] = nn;
+	    
+	    return idx;
+    }
+inline    uint32_t CustUpdateKnnList(Neighbor* addr, int left, int right, uint32_t size, Neighbor nn) {
+      // find the location to insert
+      if (addr[left].dist > nn.dist) {
+        memmove((char*)&addr[left + 1], &addr[left], (size-left) * sizeof(Neighbor));
+        addr[left] = nn;
+        return left;
+      }
+      if (addr[right].dist < nn.dist) {
+        addr[size] = nn;
+        return size;
+      }
+      while (left < right - 1) {
+        int mid = (left + right) / 2;
+        if (addr[mid].dist > nn.dist)
+          right = mid;
+        else
+          left = mid;
+      }
+      // check equal ID
+
+      while (left > 0) {
+        if (addr[left].dist < nn.dist)
+          break;
+        if ( (addr[left].id>>1) == nn.id)
+          return size + 1;
+        left--;
+      }
+      if ( (addr[left].id>>1) == nn.id || (addr[right].id>>1) == nn.id)
+        return size + 1;
+      memmove((char*)&addr[right + 1],
+              &addr[right],
+              (size - right) * sizeof(Neighbor));
+      addr[right] = nn;
+      return right;
+    }
+
             uint32_t parallel_try_insert_batch(const vector<uint32_t>& id_vec, uint32_t st_id, const float * dist_mat, uint32_t my_id){
               LockGuard guard(lock);
               int siz = id_vec.size();
 
+	      int left = 0, right = L;
+	      int pre_idx = -1;
+	      float pre_dist = -1;
               for(uint32_t i = st_id; i < siz; i++){
                 if(i == my_id) continue;
                 float dist = dist_mat[i];
-//		 if (dist > 80) continue;
-
+		
                 if(dist > radius) continue;
+		if (dist > pre_dist) {
+			left = pre_idx + 1;
+			right = L- 1;
+		} else {
+			left = 0;
+			right = pre_idx;
+		}
+
                 uint32_t id = id_vec[i];
-                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
+//#define W0 1
+#if W0 == 1
+                uint32_t l = CustUpdateKnnList(&pool[0], 
+				left,
+				right,
+				L, 
+				Neighbor(id, dist));
+#elif W0 == 2
+		float top = pool[0].dist;
+		if (dist >= top && L + 1 == pool.size()) continue;
+                uint32_t l = HeapAddKnnList(&pool[0], 
+				L, 
+				Neighbor(id, dist));
+
+#else
+                uint32_t l = UpdateKnnListHelper<Neighbor>(&pool[0], 
+				L, 
+				Neighbor(id, dist));
+#endif
                 if (l <= L) { // inserted
                   pool[l].id = (id << 1) | 1;
                   if (L + 1 == pool.size()) {
@@ -403,35 +507,11 @@ int64_t total_inserted;
                   else {
                     ++L;
                   }
+		  pre_dist = dist; pre_idx = l;
                   found = true;
 #ifdef SPECIFIC_TIME
 		  total_inserted ++;
 #endif
-                }
-              }
-              return 0;
-            }
-            uint32_t parallel_try_insert_batch1(const vector<uint32_t>& id_vec, uint32_t st_id, const float * dist_mat, uint32_t my_id){
-              LockGuard guard(lock);
-              int siz = id_vec.size();
-
-              for(uint32_t i = st_id; i < siz; i++){
-                if(i == my_id) continue;
-                float dist = dist_mat[i];
-		 if (dist > 5300) continue;
-
-                if(dist > radius) continue;
-                uint32_t id = id_vec[i];
-                uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
-                if (l <= L) { // inserted
-                  pool[l].id = (id << 1) | 1;
-                  if (L + 1 == pool.size()) {
-                    radius = pool[L - 1].dist;
-                  }
-                  else {
-                    ++L;
-                  }
-                  found = true;
                 }
               }
               return 0;
@@ -463,6 +543,13 @@ int64_t total_inserted;
 uint32_t N = oracle.size();
 
             uint32_t seed = params.seed;
+#if W0 == 1
+	    printf("using insert index with previous value\n");
+#elif W0 == 2
+	    printf("using insert index with heap value\n");
+#else
+	    printf("using normal insert index\n");
+#endif
 	  /*
             mt19937 rng(seed);
           boost::timer::cpu_timer timer0;
@@ -493,6 +580,10 @@ uint32_t N = oracle.size();
                 for (uint32_t n = 0; n < N; ++n) {
                     auto &nhood = nhoods[n];
            //     nhood.nn_new.resize(params.S * 2);
+	    //    llh
+//                nhood.nn_new.reserve(params.R + params.L + 5);
+ //              nhood.nn_old.reserve(params.R + params.L + 5);
+
                 nhood.nn_new.resize(60);
                 nhood.pool.resize(params.L+1);
                 nhood.radius = numeric_limits<float>::max();
@@ -503,21 +594,6 @@ uint32_t N = oracle.size();
                     nhood.M = params.S;
                     uint32_t i = 0;
 
-                    // Compute squared dist with Eigen
-//                    Eigen::MatrixXf D;
-//                    squared_dist(vector<uint32_t>({n}), random, D);
-//                    const float * D_data = D.data();
-//                    for (uint32_t l = 0; l < nhood.L; ++l) {
-//                      if (random[i] == n) ++i;
-//                      auto &nn = nhood.pool[l];
-//                      nn.id = random[i];
-////                        nn.dist = oracle(nn.id, n);
-////                        nn.dist = D(i, 0);
-//                      nn.dist = D_data[i];
-//                      nn.id = (nn.id<<1)|1;
-////                      nn.flag = true;
-//                      ++i;
-//                    }
 
                   // Compute squared dist with for-loop
 //		    Eigen::VectorXf dists(random.size()) ; squared_one_dist(n, random, dists); auto sq = square_sums[n];
@@ -561,26 +637,22 @@ uint32_t N = oracle.size();
 ////                // step 1. Compute all dist
                 boost::timer::cpu_timer timer;
 
-                nhoods[n].nn_old.insert(nhoods[n].nn_old.begin(), nhoods[n].nn_new.begin(), nhoods[n].nn_new.end() );
+		nhoods[n].nn_old.insert(nhoods[n].nn_old.begin(), nhoods[n].nn_new.begin(), nhoods[n].nn_new.end() );
 
+                //nn_old.insert(nn_old.begin(), nn_new.begin(), nn_new.end() );
                 const vector<uint32_t>& nn_new = nhoods[n].nn_new;
                 const vector<uint32_t>& nn_old = nhoods[n].nn_old;
 
                 Eigen::MatrixXf D(nn_old.size(), nn_new.size());
                 squared_dist(nn_new, nn_old, D);
 
-
-
 #ifdef SPECIFIC_TIME
                 auto times = timer.elapsed();
-//                cerr << "compute dist:  time: " << times.wall / 1e9<<"\n";
                 total_dist_time += (times.wall / 1e9);
 #endif
               float* data = D.data();
               uint32_t cols = D.cols(), rows = D.rows();
               size_t data_id = 0;
-
-
 
               // Batch insert
               for(size_t ia = 0; ia < cols; ia++, data_id += rows) {
@@ -617,8 +689,13 @@ uint32_t N = oracle.size();
 
 
 
+		
               vector<uint32_t>().swap(nhoods[n].nn_new);
               vector<uint32_t>().swap(nhoods[n].nn_old);
+		/* llh
+              nn_new.resize(0);
+              nn_old.resize(0);
+	      */
 
 #ifdef SPECIFIC_TIME
                 auto new_times = timer.elapsed();
@@ -718,8 +795,6 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
 
                 auto &nhood = nhoods[n];
                 nhood.found = false;
-                auto &nn_new = nhood.nn_new;
-                auto &nn_old = nhood.nn_old;
                 for (uint32_t l = 0; l < nhood.M; ++l) {
                     auto &nn = nhood.pool[l];
                     auto &nhood_o = nhoods[nn.id>>1];  // nhood on the other side of the edge

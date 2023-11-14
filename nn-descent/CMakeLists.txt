@@ -27,7 +27,7 @@ include_directories(
 )
 
 add_definitions(
-	#-DSPECIFIC_TIME
+	-DSPECIFIC_TIME
 	)
 
 # add the compiler options
