@@ -82,7 +82,7 @@ typedef kgraph::VectorOracle<MyType, MyType> MyOracle;
 
 int main(int argc, char **argv) {
   boost::timer::cpu_timer timer;
-  string source_path = "dummy-data.bin";
+  string source_path = "/root/dummy-data.bin";
 //  string source_path = "contest-data-release-1m.bin";
 //  string source_path = "contest-data-release-10m.bin";
 
@@ -114,9 +114,9 @@ int main(int argc, char **argv) {
 
   params.S = 100;
   params.K = 100;
-  params.L=  265;
-  params.R = 350;
-  params.iterations= 8;
+  params.L=  165;
+  params.R = 201;
+  params.iterations= 7;
 
 
   params.recall = 1.0;
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 
   index->build(oracle, params);
 
-  printf("Build finished!\n");
+  printf("Build finished S: %d, K :%d, L: %d, R:%d !\n", params.S, params.K, params.L, params.R);
   auto times = timer.elapsed();
   std::cerr << "Build time: " << times.wall / 1e9 <<"\n";
 

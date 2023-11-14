@@ -23,7 +23,12 @@ include_directories(
 		${KGRAPH_SOURCE_DIR}
 		/usr/local/include/eigen3
 		${MKLROOT}/include
+		/opt/intel/mkl/include
 )
+
+add_definitions(
+	-DSPECIFIC_TIME
+	)
 
 # add the compiler options
 add_compile_options(
@@ -39,7 +44,10 @@ add_compile_options(
 )
 
 # find the Intel MKL libraries
-find_package(MKL REQUIRED)
+#set(MKL_DIR /root/winner/nn-descent)
+#set(CMAKE_MODULE_PATH /root/winner/nn-descent/)
+#set(CMAKE_MODULE_PATH /root/tools/eigen-3.4.0/bench/btl/cmake/)
+#find_package(MKL REQUIRED)
 
 
 set(MKL_LIBRARIES mkl_intel_lp64 mkl_core mkl_gnu_thread pthread m dl)

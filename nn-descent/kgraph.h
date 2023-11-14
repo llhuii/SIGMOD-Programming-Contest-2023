@@ -3,8 +3,6 @@
 //#define EIGEN_USE_THREADS 1
 #define EIGEN_DONT_PARALLELIZE
 
-
-
 #ifndef WDONG_KGRAPH
 #define WDONG_KGRAPH
 

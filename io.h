@@ -17,8 +17,10 @@ using std::endl;
 using std::string;
 using std::vector;
 
+const int DD = 200;
+
 /// @brief Save knng in binary format (uint32_t) with name "output.bin"
-/// @param knng a (N * 100) shape 2-D vector
+/// @param knng a (N * 200) shape 2-D vector
 /// @param path target save path, the output knng should be named as
 /// "output.bin" for evaluation
 void SaveKNNG(const std::vector<std::vector<uint32_t>> &knng,
@@ -37,7 +39,7 @@ void SaveKNNG(const std::vector<std::vector<uint32_t>> &knng,
   ofs.close();
 }
 
-/// @brief Reading binary data vectors. Raw data store as a (N x 100)
+/// @brief Reading binary data vectors. Raw data store as a (N x 200)
 /// binary file.
 /// @param file_path file path of binary data
 /// @param data returned 2D data vectors
@@ -53,7 +55,7 @@ void ReadBin(const std::string &file_path,
   data.resize(N);
   std::cout << "# of points: " << N << std::endl;
 
-  const int num_dimensions = 100;
+  const int num_dimensions = DD;
   std::vector<float> buff(num_dimensions);
   int counter = 0;
   while (ifs.read((char *)buff.data(), num_dimensions * sizeof(float))) {
@@ -89,9 +91,9 @@ void ReadBinEigen(const std::string &file_path,
   uint32_t N;  // num of points
 
   ifs.read((char *)&N, sizeof(uint32_t));
-  data = Eigen::MatrixXf((int)N, 100);
+  data = Eigen::MatrixXf((int)N, DD);
   std::cout << "# of points: " << N << std::endl;
-  const int num_dimensions = 100;
+  const int num_dimensions = DD;
   std::vector<float> buff(num_dimensions);
   int counter = 0;
   while (ifs.read((char *)buff.data(), num_dimensions * sizeof(float))) {
@@ -115,9 +117,9 @@ void ReadBinEigenColMajor(const std::string &file_path,
   uint32_t N;  // num of points
 
   ifs.read((char *)&N, sizeof(uint32_t));
-  data = Eigen::MatrixXf(100, (int)N);
+  data = Eigen::MatrixXf(DD, (int)N);
   std::cout << "# of points: " << N << std::endl;
-  const int num_dimensions = 100;
+  const int num_dimensions = DD;
   std::vector<float> buff(num_dimensions);
   int counter = 0;
   while (ifs.read((char *)buff.data(), num_dimensions * sizeof(float))) {

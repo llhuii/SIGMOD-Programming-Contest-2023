@@ -295,22 +295,6 @@ namespace kgraph {
     };
     class KGraphConstructor: public KGraphImpl {
 
-        static void current_best_squared_dist(const vector<uint32_t>& idA, const vector<uint32_t>& idB, Eigen::MatrixXf& D){  // Compute squared Euclidean dist between 2 matrixes
-          Eigen::internal::set_is_malloc_allowed(false);
-//          // (100, na)   (100, nb)  ->
-          Eigen::MatrixXf A = nodes(Eigen::all, idA); // (100, na)
-          Eigen::MatrixXf B = nodes(Eigen::all, idB).transpose(); // (nb, 100)
-          // get square sum
-          Eigen::MatrixXf A2 = square_sums(idA, Eigen::all).transpose();  // (1, na)
-          Eigen::MatrixXf B2 = square_sums(idB, Eigen::all);  // (nb, 1)
-
-          D.noalias() = -2 * B * A;
-          D.noalias() += B2 * Eigen::MatrixXf::Ones(1, A2.cols());
-          D.noalias() += Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
-
-          Eigen::internal::set_is_malloc_allowed(true);
-          return;
-        }
 
         static void squared_dist(const vector<uint32_t>& idA, const vector<uint32_t>& idB, Eigen::MatrixXf& D){  // Compute squared Euclidean dist between 2 matrixes
           Eigen::internal::set_is_malloc_allowed(false);
@@ -321,7 +305,7 @@ namespace kgraph {
           Eigen::MatrixXf A2 = square_sums(idA, Eigen::all).transpose();  // (1, na)
           Eigen::MatrixXf B2 = square_sums(idB, Eigen::all);  // (nb, 1)
 
-          D.noalias() = -2 * B * A;
+          D.noalias() =  B * -2 * A;
           D.noalias() += B2 * Eigen::MatrixXf::Ones(1, A2.cols());
           D.noalias() += Eigen::MatrixXf::Ones(B2.rows(),1) * (A2);
 
@@ -723,7 +707,9 @@ public:
 
             uint32_t N = oracle.size();
 
-            square_sums = nodes.colwise().squaredNorm();
+            square_sums =  nodes.colwise().squaredNorm();
+	    cout << "get " << square_sums[0] << endl;
+            // square_sums *= 1; cout << "get " << square_sums[0] << endl;
             vector<Control> controls;
             if (verbosity > 0) cerr << "Generating control..." << endl;
             GenerateControl(oracle, params.controls, params.K, &controls);
