@@ -115,9 +115,9 @@ int main1(int argc, char **argv) {
 
 	params.S = 100;
 	params.K = 100;
-	params.L=  165;
-	params.R = 251;
-	params.iterations= 7;
+	params.L=  180;
+	params.R = 295;
+	params.iterations= 9;
 
 
 	params.recall = 1.0;
@@ -130,12 +130,12 @@ int main1(int argc, char **argv) {
 // params.controls= 100;
 
            uint32_t *data= (uint32_t*)KGraph::nodes.data();
-	printf("Build starting with S: %d, K: %d, L: %d, R:%d !\n", params.S, params.K, params.L, params.R);
+	printf("Build starting with S:%d, K:%d, L:%d, R:%d, iter=%d !\n", params.S, params.K, params.L, params.R, params.iterations);
 
 	index->build(oracle, params);
 
 	auto times_build = timer.elapsed();
-	printf("Build finished S: %d, K :%d, L: %d, R:%d !\n", params.S, params.K, params.L, params.R);
+	printf("Build finished S:%d, K:%d, L:%d, R:%d !\n", params.S, params.K, params.L, params.R);
 	std::cerr << "Build time: " << times_build.wall / 1e9 <<"\n";
 
 	// Save to ouput.bin
@@ -170,7 +170,6 @@ Eigen::internal::set_is_malloc_allowed(false);
 	PerfType A2 = square_sums(idA, Eigen::all).transpose();  // (1, na)
 	PerfType B2 = square_sums(idB, Eigen::all);  // (nb, 1)
 
-	D.noalias() =  B * -2 * A;
 #ifdef PINT
 	D.noalias() += B2 * Eigen::MatrixXd::Ones (1, A2.cols());
 	D.noalias() += Eigen::MatrixXd::Ones (B2.rows(),1) * (A2);

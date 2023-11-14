@@ -219,9 +219,6 @@ namespace kgraph {
               &addr[right],
               (size - right) * sizeof(Neighbor));
       addr[right] = nn;
-//      cout<<addr[right].id<<"  " << ((addr[right].id<<1)|1) <<"\n";
-//      addr[right].id = (addr[right].id<<1)|1;
-//      cout<<"after "<<addr[right].id<<"\n";
       return right;
     }
 
@@ -334,6 +331,16 @@ namespace kgraph {
           return;
         }
 
+        static void squared_one_dist(const uint32_t idA, const vector<uint32_t>& idB, Eigen::VectorXf& D){  // Compute squared Euclidean dist between 2 matrixes
+          Eigen::internal::set_is_malloc_allowed(false);
+          Eigen::VectorXf A = nodes(Eigen::all, idA); // (200)
+          Eigen::MatrixXf B = nodes(Eigen::all, idB).transpose(); // (nb,200)
+          D.noalias() =  square_sums(idB)-B*A; // (1, nb)
+
+          Eigen::internal::set_is_malloc_allowed(true);
+          return;
+        }
+
 
 
         // The neighborhood structure maintains a pool of near neighbors of an object.
@@ -348,11 +355,12 @@ namespace kgraph {
             uint32_t L;     // # valid items in the pool,  L + 1 <= pool.size()
             uint32_t M;     // we only join items in pool[0..M)
             bool found;     // helped found new NN in this round
-int64_t total_inserted;
             vector<uint32_t> nn_old;
             vector<uint32_t> nn_new;
-            vector<uint32_t> rnn_old;
-            vector<uint32_t> rnn_new;
+
+#ifdef SPECIFIC_TIME
+int64_t total_inserted;
+#endif
 
             // only non-readonly method which is supposed to be called in parallel
             uint32_t parallel_try_insert (uint32_t id, float dist) {
@@ -361,9 +369,9 @@ int64_t total_inserted;
                 uint32_t l = UpdateKnnList(&pool[0], L, Neighbor(id, dist));
 
                 if (l <= L) { // inserted
-//                  if(pool[l].id != (id * 2 + 1))cout<<"error!!!" <<id <<" "<<pool[l].id <<"\n";
+//                  if(pool[l].id != (id * 2 + 1))cerr<<"error!!!" <<id <<" "<<pool[l].id <<"\n";
                   pool[l].id = (id<<1)|1;
-//                  if(pool[l].id != (id * 2 + 1))cout<<"error!!!" <<id <<" "<<pool[l].id <<"\n";
+//                  if(pool[l].id != (id * 2 + 1))cerr<<"error!!!" <<id <<" "<<pool[l].id <<"\n";
                   if (L + 1 == pool.size()) {
                     radius = pool[L-1].dist;
                   }
@@ -396,7 +404,9 @@ int64_t total_inserted;
                     ++L;
                   }
                   found = true;
+#ifdef SPECIFIC_TIME
 		  total_inserted ++;
+#endif
                 }
               }
               return 0;
@@ -453,13 +463,22 @@ int64_t total_inserted;
 uint32_t N = oracle.size();
 
             uint32_t seed = params.seed;
+	  /*
             mt19937 rng(seed);
-            for (auto &nhood: nhoods) {
+          boost::timer::cpu_timer timer0;
+#pragma omp parallel
+#pragma omp  for simd
+//            for (auto &nhood: nhoods) {
+                for (uint32_t n = 0; n < N; ++n) {
+                    auto &nhood = nhoods[n];
                 nhood.nn_new.resize(params.S * 2);
-//                nhood.nn_new.resize(params.S );
+//                nhood.nn_new.resize(60 );
                 nhood.pool.resize(params.L+1);
                 nhood.radius = numeric_limits<float>::max();
             }
+          auto times0 = timer0.elapsed();
+          cerr << "Init nhoods:  time: " << times0.wall / 1e9<<"\n";
+	  */
 
           boost::timer::cpu_timer timer;
 #pragma omp parallel
@@ -473,6 +492,10 @@ uint32_t N = oracle.size();
 #pragma omp  for simd
                 for (uint32_t n = 0; n < N; ++n) {
                     auto &nhood = nhoods[n];
+           //     nhood.nn_new.resize(params.S * 2);
+                nhood.nn_new.resize(60);
+                nhood.pool.resize(params.L+1);
+                nhood.radius = numeric_limits<float>::max();
                     Neighbors &pool = nhood.pool;
                     GenRandom(rng, &nhood.nn_new[0], nhood.nn_new.size(), N);
                     GenRandom(rng, &random[0], random.size(), N);
@@ -497,6 +520,8 @@ uint32_t N = oracle.size();
 //                    }
 
                   // Compute squared dist with for-loop
+//		    Eigen::VectorXf dists(random.size()) ; squared_one_dist(n, random, dists); auto sq = square_sums[n];
+//
                     for (uint32_t l = 0; l < nhood.L; ++l) {
                         if (random[i] == n) ++i;
                         auto &nn = nhood.pool[l];
@@ -627,13 +652,13 @@ nhoods[n].total_inserted = 0;
 //maxD = max(maxD, );
         	}
                 auto new_times = timer.elapsed();
-            cout<<"max radius time is "<<new_times.wall/1e9<<"\n";
+            cerr<<"max radius time is "<<new_times.wall/1e9<<"\n";
 	    list_pq(mxheap, 10);
-            cout<<"total inserted "<<total_inserted<<"\n";
+            cerr<<"total inserted "<<total_inserted<<"\n";
 
 }
-            cout<<"Total dist time is "<<total_dist_time<<"\n";
-            cout<<"Total insert time is "<<total_insert_time<<"\n";
+            cerr<<"Total dist time is "<<total_dist_time<<"\n";
+            cerr<<"Total insert time is "<<total_insert_time<<"\n";
 #endif
 #ifdef DIST_CNT
             n_comps += cc;
@@ -647,13 +672,13 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
 	size_t n {count};
 	while (!pq.empty())
 	{
-		std::cout << pq.top() << " ";
+		std::cerr << pq.top() << " ";
 		pq.pop();
 		if (--n) continue;
-		std::cout << std::endl;
+		std::cerr << std::endl;
 		n = count;
 	}
-	std::cout << std::endl;
+	std::cerr << std::endl;
 }
 
 
@@ -697,43 +722,26 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                 auto &nn_old = nhood.nn_old;
                 for (uint32_t l = 0; l < nhood.M; ++l) {
                     auto &nn = nhood.pool[l];
-                    uint32_t nn_real_id = nn.id >> 1;
-//                    if(nn_real_id >=N)cout<<"Errroor!!\n";
-                    auto &nhood_o = nhoods[nn_real_id];  // nhood on the other side of the edge
-//                    if (nn.flag) {
-//                    if (nhood.flags.test(l)) {
+                    auto &nhood_o = nhoods[nn.id>>1];  // nhood on the other side of the edge
                     if (nn.id & 1) {
-                        nn_new.push_back(nn_real_id);
                         if (nn.dist > nhood_o.radiusM) {
                             LockGuard guard(nhood_o.lock);
-                            if(nhood_o.rnn_new.size() < params.R)
-                              nhood_o.rnn_new.push_back(n);
+                            if(nhood_o.nn_new.size() < params.R)
+                              nhood_o.nn_new.push_back(n);
                             else{
                               uint32_t loc = rng() % params.R;
-//                              uint32_t past_M = nhoods[nhood_o.rnn_new[loc]].M;
-//                              uint32_t new_M  = nhood.M;
-//                              if(new_M < past_M)
-                                nhood_o.rnn_new[loc] = n;
+                                nhood_o.nn_new[loc] = n;
                             }
                         }
-//                        nn.id &= (~(uint32_t)1);
-                        nn.id &= 4294967294u;
-
                     }
                     else {
-//                        nn_old.push_back(nn.id);
-                        nn_old.push_back(nn_real_id);
                         if (nn.dist > nhood_o.radiusM) {
                             LockGuard guard(nhood_o.lock);
-//                            nhood_o.rnn_old.push_back(n);
-                            if(nhood_o.rnn_old.size() < params.R)
-                              nhood_o.rnn_old.push_back(n);
+                            if(nhood_o.nn_old.size() < params.R)
+                              nhood_o.nn_old.push_back(n);
                             else{
                               uint32_t loc = rng() % params.R;
-//                              uint32_t past_M = nhoods[nhood_o.rnn_old[loc]].M;
-//                              uint32_t new_M  = nhood.M;
-//                              if(new_M < past_M)
-                                nhood_o.rnn_old[loc] = n;
+                                nhood_o.nn_old[loc] = n;
                             }
                         }
                     }
@@ -741,18 +749,22 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
             }
             // sample #params.R nodes from new & old of 【rnn】
             // not sure if better
-#pragma omp simd
-#pragma unroll
-            for (uint32_t i = 0; i < N; ++i) {
-                auto &nn_new = nhoods[i].nn_new;
-                auto &nn_old = nhoods[i].nn_old;
-                auto &rnn_new = nhoods[i].rnn_new;
-                auto &rnn_old = nhoods[i].rnn_old;
+            #pragma omp parallel for simd
+            for (uint32_t n = 0; n < N; ++n) {
+                auto &nhood = nhoods[n];
+                auto &nn_new = nhood.nn_new;
+                auto &nn_old = nhood.nn_old;
 
-                nn_new.insert(nn_new.end(), rnn_new.begin(), rnn_new.end());
-                nn_old.insert(nn_old.end(), rnn_old.begin(), rnn_old.end());
-                vector<uint32_t>().swap(rnn_new);
-                vector<uint32_t>().swap(rnn_old);
+                for (uint32_t l = 0; l < nhood.M; ++l) {
+                    auto &nn = nhood.pool[l];
+                    
+			if (nn.id&1) {
+				nn_new.push_back(nn.id>>1);
+				nn.id ^= 1;
+			}else{
+				nn_old.push_back(nn.id>>1);
+			}
+		}
             }
 #ifdef SHOW_MEM_SIZE
             uint32_t nhood_size        = sizeof(nhoods[0]);
@@ -761,11 +773,11 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
             uint32_t nhood_nn_old_size = sizeof(nhoods[0].nn_old[0]) * nhoods[0].nn_old.size();
             double total_estimate = 1.0 * (nhood_size + nhood_pool_size + nhood_nn_new_size + nhood_nn_old_size) * N / 1024 /1024 /1024;
           // help function
-            cout<<"sizeof(nhoods[0]) " << nhood_size <<"\n";
-            cout<<"sizeof(nhoods[0].pool) " << nhood_pool_size <<"\n";
-            cout<<"sizeof(nhoods[0].nn_new) " << nhood_nn_new_size <<"\n";
-            cout<<"sizeof(nhoods[0].nn_old) " << nhood_nn_old_size <<"\n";
-            cout<<"Estimate total size is ["<<total_estimate<<"]\n\n";
+            cerr<<"sizeof(nhoods[0]) " << nhood_size <<"\n";
+            cerr<<"sizeof(nhoods[0].pool) " << nhood_pool_size <<"\n";
+            cerr<<"sizeof(nhoods[0].nn_new) " << nhood_nn_new_size <<"\n";
+            cerr<<"sizeof(nhoods[0].nn_old) " << nhood_nn_old_size <<"\n";
+            cerr<<"Estimate total size is ["<<total_estimate<<"]\n\n";
 # endif
         }
 
@@ -780,7 +792,7 @@ public:
             uint32_t N = oracle.size();
 
             square_sums =  nodes.colwise().squaredNorm()/2;
-            // square_sums *= 1; cout << "get " << square_sums[0] << endl;
+            // square_sums *= 1; cerr << "get " << square_sums[0] << endl;
             vector<Control> controls;
             if (verbosity > 0) cerr << "Generating control..." << endl;
 if (params.controls > 0 )
@@ -862,7 +874,7 @@ if (params.controls > 0 )
               }
                 // compute the elapsed time
                 auto elapsed_time = chrono::duration_cast<chrono::duration<double>>(stop_join - start_itr);
-                cout << "Join   elapsed: " << elapsed_time.count() << " seconds\n";
+                cerr << "Join   elapsed: " << elapsed_time.count() << " seconds\n";
 
                 if(it < params.iterations -1) { // not last loop
                   update();
@@ -870,7 +882,7 @@ if (params.controls > 0 )
                 auto stop_update = chrono::high_resolution_clock::now();
 
                 elapsed_time = chrono::duration_cast<chrono::duration<double>>(stop_update - stop_join);
-                cout << "Update  elapsed: " << elapsed_time.count() << " seconds\n";
+                cerr << "Update  elapsed: " << elapsed_time.count() << " seconds\n";
                 }
             }
             // Save id to knn
@@ -907,7 +919,7 @@ if (params.controls > 0 )
             }
 */
 auto times_get_knng =  timer.elapsed();
-	cout << "Copy data time: " << (times_get_knng.wall - times_start_knng.wall) / 1e9 <<"\n";
+	cerr << "Copy data time: " << (times_get_knng.wall - times_start_knng.wall) / 1e9 <<"\n";
 
         }
 
