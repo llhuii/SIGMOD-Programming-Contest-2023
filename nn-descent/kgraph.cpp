@@ -363,6 +363,7 @@ namespace kgraph {
               for(uint32_t i = st_id; i < siz; i++){
                 if(i == my_id) continue;
                 float dist = dist_mat[i];
+		// if (dist > 5300) continue;
 
                 if(dist > radius) continue;
                 uint32_t id = id_vec[i];

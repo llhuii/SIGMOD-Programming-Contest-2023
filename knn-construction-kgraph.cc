@@ -87,10 +87,7 @@ typedef kgraph::VectorOracle<MyType, MyType> MyOracle;
 
 int main1(int argc, char **argv) {
 	boost::timer::cpu_timer timer;
-	string source_path = "/root/dummy-data.bin";
-	//  string source_path = "contest-data-release-1m.bin";
-	//  string source_path = "contest-data-release-10m.bin";
-
+	string source_path = "dummy-data.bin";
 
 	// Also accept other path for source data
 	if (argc > 1) {
@@ -120,8 +117,8 @@ int main1(int argc, char **argv) {
 	params.S = 100;
 	params.K = 100;
 	params.L=  165;
-	params.R = 251;
-	params.iterations= 8;
+	params.R = 254;
+	params.iterations= 7;
 
 
 	params.recall = 1.0;
@@ -131,7 +128,7 @@ int main1(int argc, char **argv) {
 	  params.controls = 0;
 
 	// 【For local evaluation】
-	// params.controls= 100;
+// params.controls= 100;
 
            uint32_t *data= (uint32_t*)KGraph::nodes.data();
 	printf("Build starting with S: %d, K :%d, L: %d, R:%d !\n", params.S, params.K, params.L, params.R);
@@ -188,16 +185,8 @@ Eigen::internal::set_is_malloc_allowed(false);
 	return;
 }
 
-static void squared_dist_int(const vector<uint32_t>& idA, const vector<uint32_t>& idB, Eigen::MatrixXi& D){  // Compute squared Euclidean dist between 2 matrixes
-	Eigen::internal::set_is_malloc_allowed(false);
-//	D.noalias() =  Cache((A-B).cwiseAbs())
-
-	Eigen::internal::set_is_malloc_allowed(true);
-	return;
-}
-
 int main2(int argc, char **argv) {
-	string source_path = "/root/dummy-data.bin";
+	string source_path = "dummy-data.bin";
 
 	// Also accept other path for source data
 	if (argc > 1) {
@@ -246,7 +235,7 @@ using namespace std;
 using namespace Eigen;
 int perfIntTest()
 {
- int dimension = 5000;
+ int dimension = 50;
 
  Matrix <int, Dynamic, Dynamic> intMatrixA(dimension, dimension);
  Matrix <int, Dynamic, Dynamic> intMatrixB(dimension, dimension);
@@ -290,5 +279,6 @@ return 0;
 
 int main(int argc, char **argv) {
 	//return main2(argc, argv);
-	return main1(argc, argv);
+return main1(argc, argv);
+//	perfIntTest();
 }
