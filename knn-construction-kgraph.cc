@@ -83,6 +83,12 @@ float compare_with_id(const MyType& a, const MyType& b, uint32_t id_a, uint32_t 
 typedef kgraph::VectorOracle<MyType, MyType> MyOracle;
 
 
+int readEnvParam(const char *key, int default_) {
+if(char *v = getenv(key)) {
+	default_ = atoi(v);
+}
+return default_;
+}
 
 int main1(int argc, char **argv) {
 	boost::timer::cpu_timer timer;
@@ -112,14 +118,13 @@ int main1(int argc, char **argv) {
 	KGraph *index = KGraph::create();
 
 
-
 	KGraph::IndexParams params;
 
 	params.S = 100;
 	params.K = 100;
-	params.L=  200;
-	params.R = 335;
-	params.iterations= 6;
+	params.L=  readEnvParam("L", 200);
+	params.R = readEnvParam("R", 327);
+	params.iterations= readEnvParam("ITER", 7);
 
 
 	params.recall = 1.0;
@@ -129,9 +134,10 @@ int main1(int argc, char **argv) {
 	  params.controls = 0;
 
 	// 【For local evaluation】
-// params.controls= 100;
+ params.controls= readEnvParam("NCONTROLS", 0);
 
            uint32_t *data= (uint32_t*)KGraph::nodes.data();
+	   printf("llh: starting with new method\n");
 	printf("Build starting with S:%d, K:%d, L:%d, R:%d, iter=%d !\n", params.S, params.K, params.L, params.R, params.iterations);
 
 	index->build(oracle, params);

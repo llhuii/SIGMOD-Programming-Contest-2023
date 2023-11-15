@@ -1,6 +1,6 @@
-rm CMakeCache.txt
+#rm CMakeCache.txt
 cmake -DCMAKE_BUILD_TYPE=release .
-#cmake -DCMAKE_BUILD_TYPE=DEBUG -D CMAKE_CXXFLAGS='-DSPECIFIC_TIME' .
+#cmake -DCMAKE_BUILD_TYPE=DEBUG .
 make clean
-make
-sudo make install
+make VERBOSE=1
+#sudo make install
