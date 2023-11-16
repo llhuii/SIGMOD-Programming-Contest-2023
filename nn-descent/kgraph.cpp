@@ -525,9 +525,6 @@ inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist 
       }
 
       int left = 0, right = L - 1;
-      if (addr[right].dist < dist) {
-        return L;
-      }
       while (left < right - 1) {
         int mid = (left + right)>>1;
         if (addr[mid].dist > dist)
@@ -557,14 +554,20 @@ inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist 
 	      LockGuard guard(lock);
 
 
+uint32_t l;
               for(uint32_t i = 0, id; i < siz; i++){
                 id = id_vec[i];
                 if(id == self ) continue;
 
                 float dist = dist_mat[i];
-		if (dist > radius) continue;
-
-                uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
+		if (dist > radius) {
+			continue;
+		}
+      if (!is_full && pool[L-1].dist < dist) {
+        l= L;
+      } else {
+                l = UpdateKnnListInline0(&pool[0], id, dist);
+      }
 
                 if (l <= L) { // inserted
                     pool[l] = Neighbor((id << 1) | 1, dist);
