@@ -359,6 +359,7 @@ bool operator< (const Neighbor& s) const {
 
 uint32_t self;
 
+	    uint32_t pool_size;
             uint32_t L;     // # valid items in the pool,  L + 1 <= pool.size()
             uint32_t M;     // we only join items in pool[0..M)
             bool found;     // helped found new NN in this round
@@ -561,12 +562,13 @@ inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist 
                 if(id == self ) continue;
 
                 float dist = dist_mat[i];
+		if (dist > radius) continue;
 
                 uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
 
                 if (l <= L) { // inserted
                     pool[l] = Neighbor((id << 1) | 1, dist);
-                  if (L + 1== pool.size()) {
+                  if (L== pool_size - 1) {
 			  is_full = true;
 			  radius = pool[L-1].dist;
 		  }else
@@ -588,7 +590,7 @@ void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const floa
 
 	      LockGuard guard(lock);
 
-              for(uint32_t i = 0, id; i < size; i++){
+              for(uint32_t i=0,id; i < size;i++){
                 id = id_vec[i];
                 if(id == self ) continue;
 
@@ -636,8 +638,11 @@ void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const floa
         vector<Nhood> nhoods;
         size_t n_comps;
 
+bool	is_first;
+
         void init () {
 uint32_t N = oracle.size();
+is_first = true;
 
             uint32_t seed = params.seed;
 #if W0 == 1
@@ -684,9 +689,10 @@ uint32_t N = oracle.size();
                 nhood.nn_new.resize(60);
 
 		nhood.self = n;
-                nhood.pool.resize(params.L+1);
+                nhood.pool.resize(params.L+1); 
+		nhood.radius = numeric_limits<float>::max();
+		nhood.pool_size = nhood.pool.size();
 		// nhood.LL = params.L;
-                nhood.radius = numeric_limits<float>::max();
                     Neighbors &pool = nhood.pool;
                     GenRandom(rng, &nhood.nn_new[0], nhood.nn_new.size(), N);
                     GenRandom(rng, &random[0], random.size(), N);
@@ -731,10 +737,11 @@ uint32_t N = oracle.size();
 ////                // Eigen-version
 ////                // step 1. Compute all dist
                 boost::timer::cpu_timer timer;
+		 auto &nhood = nhoods[n];
 
-		nhoods[n].nn_old.insert(nhoods[n].nn_old.end(), nhoods[n].nn_new.begin(), nhoods[n].nn_new.end() );
-                const vector<uint32_t>& nn_new = nhoods[n].nn_new;
-                const vector<uint32_t>& nn_old = nhoods[n].nn_old;
+		nhood.nn_old.insert(nhood.nn_old.end(), nhood.nn_new.begin(), nhood.nn_new.end() );
+                const vector<uint32_t>& nn_new = nhood.nn_new;
+                const vector<uint32_t>& nn_old = nhood.nn_old;
 
                 Eigen::MatrixXf D(nn_old.size(), nn_new.size());
                 squared_dist(nn_new, nn_old, D);
@@ -752,7 +759,7 @@ uint32_t N = oracle.size();
               for(size_t ia = 0; ia < cols; ia++, data += rows) {
 
 		 auto &nhood = nhoods[nn_new[ia]];
-		 if (nhood.is_full) {
+		 if (!is_first) {
 			    nhood.parallel_try_insert_batch_full(rows, &nn_old[0], data);
 		 } else {
 			 nhood.parallel_try_insert_batch(rows, &nn_old[0], data);
@@ -764,22 +771,25 @@ uint32_t N = oracle.size();
                 data = B.data();
                 for (size_t ib = 0; ib < old_size; ib++, data += cols) {
 		 auto &nhood = nhoods[nn_old[ib]];
-		 if (nhood.is_full) {
+		 if (!is_first) {
 			    nhood.parallel_try_insert_batch_full(cols, &nn_new[0], data);
 		 } else {
-                  nhood.parallel_try_insert_batch(cols, &nn_new[0], data);
+			  nhood.parallel_try_insert_batch(cols, &nn_new[0], data);
 		 }
                 }
 
 		
-              vector<uint32_t>().swap(nhoods[n].nn_old);
+		/*
+              vector<uint32_t>().swap(nhood.nn_old);
 
-              vector<uint32_t>().swap(nhoods[n].nn_new);
-//              nhoods[n].nn_new.resize(0);
-		/* llh
-              nn_new.resize(0);
-              nn_old.resize(0);
+              vector<uint32_t>().swap(nhood.nn_new);
 	      */
+//              nhoods[n].nn_new.resize(0);
+		 // llh
+              nhood.nn_new.resize(0);
+              nhood.nn_old.resize(0);
+		nhood.nn_new.reserve(params.R);
+		nhood.nn_old.reserve(params.R);
 
 #ifdef SPECIFIC_TIME
                 auto new_times = timer.elapsed();
@@ -1047,6 +1057,8 @@ printf("using m_sort\n");
                 elapsed_time = chrono::duration_cast<chrono::duration<double>>(stop_update - stop_join);
                 cerr << "Update  elapsed: " << elapsed_time.count() << " seconds\n";
                 }
+
+		is_first = false;
             }
 
 

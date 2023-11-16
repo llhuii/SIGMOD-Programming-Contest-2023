@@ -103,6 +103,7 @@ int main1(int argc, char **argv) {
 	// Read data points
 	//  ReadBinEigen(source_path, KGraph::nodes);   // Eigen version
 	ReadBinEigenColMajor(source_path, KGraph::nodes);   // Eigen version
+
 	auto times_load = timer.elapsed();
 	std::cerr <<"Load data finished in " << (times_load.wall/1e9) << endl;
 
@@ -123,7 +124,7 @@ int main1(int argc, char **argv) {
 	params.S = 100;
 	params.K = 100;
 	params.L=  readEnvParam("L", 200);
-	params.R = readEnvParam("R", 327);
+	params.R = readEnvParam("R", 330);
 	params.iterations= readEnvParam("ITER", 7);
 
 
@@ -134,10 +135,10 @@ int main1(int argc, char **argv) {
 	  params.controls = 0;
 
 	// 【For local evaluation】
- params.controls= readEnvParam("NCONTROLS", 0);
+         params.controls= readEnvParam("NCONTROLS", 0);
 
            uint32_t *data= (uint32_t*)KGraph::nodes.data();
-	   printf("llh: starting with new method\n");
+        printf("llh: starting with new method\n");
 	printf("Build starting with S:%d, K:%d, L:%d, R:%d, iter=%d !\n", params.S, params.K, params.L, params.R, params.iterations);
 
 	index->build(oracle, params);
