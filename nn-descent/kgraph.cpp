@@ -524,7 +524,11 @@ inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist 
         return 0;
       }
 
+
       int left = 0, right = L - 1;
+//if (addr[right].dist < dist) { return L;}
+
+
       while (left < right - 1) {
         int mid = (left + right)>>1;
         if (addr[mid].dist > dist)
@@ -554,7 +558,6 @@ inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist 
 	      LockGuard guard(lock);
 
 
-uint32_t l;
               for(uint32_t i = 0, id; i < siz; i++){
                 id = id_vec[i];
                 if(id == self ) continue;
@@ -563,11 +566,14 @@ uint32_t l;
 		if (dist > radius) {
 			continue;
 		}
-      if (!is_full && pool[L-1].dist < dist) {
+uint32_t l;
+
+      if (!is_full && pool[L-1].dist +1e-5< dist) {
         l= L;
       } else {
                 l = UpdateKnnListInline0(&pool[0], id, dist);
       }
+      //          l = UpdateKnnListInline0(&pool[0], id, dist);
 
                 if (l <= L) { // inserted
                     pool[l] = Neighbor((id << 1) | 1, dist);
@@ -600,7 +606,7 @@ void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const floa
                 float dist = dist_mat[i];
 
 //                if(dist > pool[L-1].dist) continue;  // this is slow
-                if(dist > radius) continue;
+                if(dist >= radius) continue;
 
                 uint32_t l = UpdateKnnListInline0(&pool[0], id, dist);
 
@@ -642,10 +648,12 @@ void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const floa
         size_t n_comps;
 
 bool	is_first;
+bool is_last;
 
         void init () {
 uint32_t N = oracle.size();
 is_first = true;
+is_last = false;
 
             uint32_t seed = params.seed;
 #if W0 == 1
@@ -689,6 +697,7 @@ is_first = true;
 //                nhood.nn_new.reserve(params.R + params.L + 5);
  //              nhood.nn_old.reserve(params.R + params.L + 5);
 
+               // nhood.nn_new.resize(params.S);
                 nhood.nn_new.resize(60);
 
 		nhood.self = n;
@@ -742,7 +751,11 @@ is_first = true;
                 boost::timer::cpu_timer timer;
 		 auto &nhood = nhoods[n];
 
-		nhood.nn_old.insert(nhood.nn_old.end(), nhood.nn_new.begin(), nhood.nn_new.end() );
+		 if (!is_first) {
+			nhood.nn_old.insert(nhood.nn_old.end(), nhood.nn_new.begin(), nhood.nn_new.end() );
+		 } else {
+			 nhood.nn_old = nhood.nn_new;
+		 }
                 const vector<uint32_t>& nn_new = nhood.nn_new;
                 const vector<uint32_t>& nn_old = nhood.nn_old;
 
@@ -783,16 +796,20 @@ is_first = true;
 
 		
 		/*
-              vector<uint32_t>().swap(nhood.nn_old);
-
-              vector<uint32_t>().swap(nhood.nn_new);
 	      */
 //              nhoods[n].nn_new.resize(0);
 		 // llh
+		 if (!is_last) {
               nhood.nn_new.resize(0);
-              nhood.nn_old.resize(0);
 		nhood.nn_new.reserve(params.R);
-		nhood.nn_old.reserve(params.R);
+               nhood.nn_old.resize(0); nhood.nn_old.reserve(params.R);
+              //    vector<uint32_t>().swap(nhood.nn_old);
+		 } else {
+                  vector<uint32_t>().swap(nhood.nn_old);
+
+                 vector<uint32_t>().swap(nhood.nn_new);
+
+		 }
 
 #ifdef SPECIFIC_TIME
                 auto new_times = timer.elapsed();
@@ -899,22 +916,24 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                     auto &nhood_o = nhoods[nn.id>>1];  // nhood on the other side of the edge
                     if (nn.dist <= nhood_o.radiusM) continue; 
                     if (nn.id & 1) {
-                              LockGuard guard(nhood_o.lock);
                             if(nhood_o.nn_new.size() < R) {
-                              nhood_o.nn_new.push_back(n);
+                              LockGuard guard(nhood_o.lock);
+				    if(nhood_o.nn_new.size() < R) {
+				      nhood_o.nn_new.push_back(n);
+				      continue;
+				    }
 			    }
-                            else{
-                                nhood_o.nn_new[rng() % R] = n;
-                            }
+                            nhood_o.nn_new[rng() % R] = n;
                     }
                     else {
-                              LockGuard guard(nhood_o.lock);
                             if(nhood_o.nn_old.size() < R) {
-                              nhood_o.nn_old.push_back(n);
+                              LockGuard guard(nhood_o.lock);
+				    if(nhood_o.nn_old.size() < R) {
+				      nhood_o.nn_old.push_back(n);
+				      continue;
+				    }
 			    }
-                            else{
-                                nhood_o.nn_old[rng() % R] = n;
-                            }
+                            nhood_o.nn_old[rng() % R] = n;
                     }
                 }
             }
@@ -991,6 +1010,7 @@ printf("using m_sort\n");
                 // start the clock for this itr
                 auto start_itr = chrono::high_resolution_clock::now();
                 ++info.iterations;
+		is_last = it + 1 == params.iterations;
                 join();
               auto stop_join = chrono::high_resolution_clock::now();
 
