@@ -660,7 +660,7 @@ is_last = false;
 #elif W0 == 2
 	    printf("using insert index with heap value\n");
 #else
-	    printf("using normal insert index\n");
+	    printf("using normal insert index 11/18\n");
 #endif
 	  /*
             mt19937 rng(seed);
@@ -693,8 +693,6 @@ is_last = false;
                     auto &nhood = nhoods[n];
            //     nhood.nn_new.resize(params.S * 2);
 	    //    llh
-//                nhood.nn_new.reserve(params.R + params.L + 5);
- //              nhood.nn_old.reserve(params.R + params.L + 5);
 
                // nhood.nn_new.resize(params.S);
                 nhood.nn_new.resize(60);
@@ -798,19 +796,25 @@ vector<uint32_t> * old ;
                 }
 
 		
-		/*
-	      */
-//              nhoods[n].nn_new.resize(0);
 		 // llh
-		 if (1&&!is_last) {
-              nhood.nn_new.resize(0);
-		nhood.nn_new.reserve(params.R);
-               nhood.nn_old.resize(0); nhood.nn_old.reserve(params.R);
-              //    vector<uint32_t>().swap(nhood.nn_old);
-		 } else {
-                  vector<uint32_t>().swap(nhood.nn_old);
+		 if (!is_last) {
+			 /*
+              // nhood.nn_new.resize(0); nhood.nn_new.reserve(params.R );
+              // nhood.nn_old.resize(0); nhood.nn_old.reserve(params.R);
+	      */
 
-                 vector<uint32_t>().swap(nhood.nn_new);
+       //        nhood.nn_new.resize(0); nhood.nn_new.reserve(params.R + params.L/2);
+        //       nhood.nn_old.resize(0); nhood.nn_old.reserve(params.R + params.L/2);
+
+		    vector<uint32_t>().swap(nhoods[n].nn_new);
+		    vector<uint32_t>().swap(nhoods[n].nn_old);
+		// nhoods[n].nn_new.resize(0);
+		 // nhoods[n].nn_old.resize(old_size);
+		 // nhoods[n].nn_old.shrink_to_fit();
+		 // vector<uint32_t>().swap(nhoods[n].nn_old);
+		 } else {
+                  // vector<uint32_t>().swap(nhood.nn_old);
+                   //vector<uint32_t>().swap(nhood.nn_new);
 
 		 }
 

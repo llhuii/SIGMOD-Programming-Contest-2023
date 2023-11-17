@@ -1,5 +1,9 @@
 input=${1:-dummy-output.bin}
 gt=${2:-${input/m./m-gt.}}
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+cd $ROOT
+
 {
 echo ${title:-new} ==========
 date
