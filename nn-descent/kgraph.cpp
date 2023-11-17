@@ -110,7 +110,6 @@ bool operator< (const Neighbor& s) const {
     typedef std::lock_guard<Lock> LockGuard;
 
 
-
     struct Control {
         uint32_t id;
         Neighbors neighbors;
@@ -751,13 +750,17 @@ is_last = false;
                 boost::timer::cpu_timer timer;
 		 auto &nhood = nhoods[n];
 
-		 if (!is_first) {
-			nhood.nn_old.insert(nhood.nn_old.end(), nhood.nn_new.begin(), nhood.nn_new.end() );
-		 } else {
-			 nhood.nn_old = nhood.nn_new;
-		 }
                 const vector<uint32_t>& nn_new = nhood.nn_new;
-                const vector<uint32_t>& nn_old = nhood.nn_old;
+
+vector<uint32_t> * old ;
+
+		 if (!nhood.nn_old.empty()) {
+			 old = &nhood.nn_old;
+			nhood.nn_old.insert(nhood.nn_old.end(), nn_new.begin(), nn_new.end() );
+		 } else {
+			 old = &nhood.nn_new;
+		 }
+                vector<uint32_t>& nn_old = (*old);
 
                 Eigen::MatrixXf D(nn_old.size(), nn_new.size());
                 squared_dist(nn_new, nn_old, D);
@@ -775,7 +778,7 @@ is_last = false;
               for(size_t ia = 0; ia < cols; ia++, data += rows) {
 
 		 auto &nhood = nhoods[nn_new[ia]];
-		 if (!is_first) {
+		 if (!is_first || nhood.is_full) {
 			    nhood.parallel_try_insert_batch_full(rows, &nn_old[0], data);
 		 } else {
 			 nhood.parallel_try_insert_batch(rows, &nn_old[0], data);
@@ -787,7 +790,7 @@ is_last = false;
                 data = B.data();
                 for (size_t ib = 0; ib < old_size; ib++, data += cols) {
 		 auto &nhood = nhoods[nn_old[ib]];
-		 if (!is_first) {
+		 if (!is_first || nhood.is_full) {
 			    nhood.parallel_try_insert_batch_full(cols, &nn_new[0], data);
 		 } else {
 			  nhood.parallel_try_insert_batch(cols, &nn_new[0], data);
@@ -799,7 +802,7 @@ is_last = false;
 	      */
 //              nhoods[n].nn_new.resize(0);
 		 // llh
-		 if (!is_last) {
+		 if (1&&!is_last) {
               nhood.nn_new.resize(0);
 		nhood.nn_new.reserve(params.R);
                nhood.nn_old.resize(0); nhood.nn_old.reserve(params.R);
@@ -1102,15 +1105,21 @@ printf("using m_sort\n");
 
              uint32_t *data = (uint32_t*)(&pool[0]); 
 	     float pre_dist = -1, dist;
-	      unordered_map<uint32_t, bool> mp;
+	     // unordered_map<uint32_t, bool> mp;
+	      unordered_set<uint32_t> mp;
+	     // bitset<10000000> bs;
 
 	     uint32_t pre_id = -1;
               for (uint32_t i = 0, k=0; k < K; ++i) {
 		      uint32_t id = pool[i].id >> 1;
-			     // dist = pool[i].dist;
-		      // if (eqFloat(pre_dist, dist) )  {
-		      if (!mp[id]){
-			      mp[id]=true;
+		      // if (!mp[id]){
+			      // mp[id]=true;
+		      if (mp.find(id) == mp.end()){
+			      mp.insert(id);
+		      /*
+		      if (!bs.test(id)){
+			      bs.set(id);
+			      */
 			      data[k++]=id;
 		      }
 #ifdef SPECIFIC_TIME
