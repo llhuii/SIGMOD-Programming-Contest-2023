@@ -765,6 +765,7 @@ is_last = false;
 	    //    llh
 
                // nhood.nn_new.resize(params.S);
+                // nhood.nn_new.reserve(params.L ); nhood.nn_old.reserve(params.L );
                 nhood.nn_new.resize(60);
 
 		nhood.self = n;
@@ -960,10 +961,11 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
         void update () {
             uint32_t N = oracle.size();
 
+            boost::timer::cpu_timer timer;
             // compute new M and corresponding radius2
 //            #pragma omp parallel for
-            #pragma omp simd
-//            #pragma omp parallel for simd
+//            #pragma omp simd
+            #pragma omp parallel for simd
             for (uint32_t n = 0; n < N; ++n) {
                 auto &nhood = nhoods[n];
                 if (nhood.found) {
@@ -980,6 +982,9 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                 BOOST_VERIFY(nhood.M > 0);
                 nhood.radiusM = nhood.pool[nhood.M-1].dist;
             }
+	    auto times_update_init = timer.elapsed();
+            cerr << "update init " << (times_update_init.wall/1e9) << endl;
+
             // Reset the variables corresponding to the nhoods to be updated
 
             #pragma omp parallel for simd
@@ -1000,25 +1005,24 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                     if (nn.id & 1) {
                             if(nhood_o.nn_new.size() < R) {
                               LockGuard guard(nhood_o.lock);
-				    if(nhood_o.nn_new.size() < R) {
 				      nhood_o.nn_new.push_back(n);
 				      continue;
-				    }
 			    }
                             nhood_o.nn_new[rng() % R] = n;
                     }
                     else {
                             if(nhood_o.nn_old.size() < R) {
                               LockGuard guard(nhood_o.lock);
-				    if(nhood_o.nn_old.size() < R) {
 				      nhood_o.nn_old.push_back(n);
-				      continue;
-				    }
+			       continue;
 			    }
                             nhood_o.nn_old[rng() % R] = n;
                     }
                 }
             }
+	    auto times_update_rnn = timer.elapsed();
+            cerr << "update rnn " << (times_update_rnn.wall-times_update_init.wall)/1e9 << endl;
+
             // sample #params.R nodes from new & old of 【rnn】
             // not sure if better
 
@@ -1029,6 +1033,7 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                 auto &nn_old = nhood.nn_old;
 
                 for (uint32_t l = 0; l < nhood.M; ++l) {
+                // for (uint32_t l = nhood.M-1; l >= 0 ; --l) {
                     auto &nn = nhood.pool[l];
 
                         if (nn.id&1) {
@@ -1052,6 +1057,8 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
             cerr<<"sizeof(nhoods[0].nn_old) " << nhood_nn_old_size <<"\n";
             cerr<<"Estimate total size is ["<<total_estimate<<"]\n\n";
 # endif
+	    auto times_update_nn = timer.elapsed();
+            cerr << "update nn " << (times_update_nn.wall-times_update_rnn.wall)/1e9 << endl;
         }
 
 
@@ -1088,7 +1095,7 @@ printf("using m_sort\n");
             info.iterations = 0;
             info.delta = 1.0;
 
-            for (uint32_t it = 0; (params.iterations <= 0) || (it < params.iterations); ++it) {
+            for (uint32_t it = 0; (params.iterations < 0) || (it < params.iterations); ++it) {
                 // start the clock for this itr
                 auto start_itr = chrono::high_resolution_clock::now();
                 ++info.iterations;
@@ -1182,50 +1189,45 @@ printf("using m_sort\n");
               auto const &pool = nhoods[n].pool;
 
 
-             uint32_t *data = (uint32_t*)(&pool[0]); 
+              // reuse matrix memory
+             // uint32_t *data = (uint32_t*)(&pool[0]); 
+             uint32_t *data = (uint32_t*)(nodes.data())+K*n; 
 	     float pre_dist = -1, dist;
-	     // unordered_map<uint32_t, bool> mp;
 	      unordered_set<uint32_t> mp;
-	     // bitset<10000000> bs;
 
 	     uint32_t pre_id = -1;
               for (uint32_t i = 0, k=0; k < K; ++i) {
 		      uint32_t id = pool[i].id >> 1;
-		      // if (!mp[id]){
-			      // mp[id]=true;
-		      if (mp.find(id) == mp.end()){
-			      mp.insert(id);
-		      /*
-		      if (!bs.test(id)){
-			      bs.set(id);
-			      */
-			      data[k++]=id;
-		      }
-#ifdef SPECIFIC_TIME
-		      else duplicate++;
-#endif
+                      dist = pool[i].dist;
+		      if (1||dist > pre_dist || mp.find(id) == mp.end()){
 
-//		pre_dist = dist;
+                              /*
+                              if (dist > pre_dist) {
+                                      pre_dist = dist + 1e-5;
+                                     // mp = std::unordered_set<uint32_t>();
+                                     // unordered_set<uint32_t>().swap(mp);
+                                     mp = {};
+                                     // mp.clear();
+                              }
+                              
+			      mp.insert(id); */
+			      data[k++]=id;
+#ifdef SPECIFIC_TIME
+		      } else {
+		      duplicate++;
+#endif
+                      }
+
               }
             }
 
 	    printf("Got duplicate count %d %f\n", duplicate, (timer.elapsed().wall-times_start_check.wall)/1e9);
 
-            // Save id to knn
-	auto times_start_knng = timer.elapsed();
-
-// reuse matrix memory;
-           uint32_t *data= (uint32_t*)nodes.data();
-            #pragma omp parallel for simd
-            for (uint32_t n = 0; n < N; ++n) {
-              auto const &pool = nhoods[n].pool;
-	      memcpy((char*)(data + n * K), &pool[0], K * 4);
-            }
 #else
             // Save id to knn
-	auto times_start_knng = timer.elapsed();
+	   auto times_start_knng = timer.elapsed();
 
-// reuse matrix memory;
+           // reuse matrix memory;
            uint32_t *data= (uint32_t*)nodes.data();
             #pragma omp parallel for simd
             for (uint32_t n = 0; n < N; ++n) {
@@ -1238,10 +1240,10 @@ printf("using m_sort\n");
               }
             }
 
-#endif
-
 auto times_get_knng =  timer.elapsed();
 	cerr << "Copy data time: " << (times_get_knng.wall - times_start_knng.wall) / 1e9 <<"\n";
+
+#endif
 
         }
 
