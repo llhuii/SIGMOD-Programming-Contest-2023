@@ -1199,18 +1199,17 @@ printf("using m_sort\n");
               for (uint32_t i = 0, k=0; k < K; ++i) {
 		      uint32_t id = pool[i].id >> 1;
                       dist = pool[i].dist;
-		      if (1||dist > pre_dist || mp.find(id) == mp.end()){
+		      if (dist > pre_dist || mp.find(id) == mp.end()){
 
-                              /*
                               if (dist > pre_dist) {
-                                      pre_dist = dist + 1e-5;
+                                      pre_dist = dist + 1e-4;
                                      // mp = std::unordered_set<uint32_t>();
                                      // unordered_set<uint32_t>().swap(mp);
                                      mp = {};
                                      // mp.clear();
                               }
                               
-			      mp.insert(id); */
+			      mp.insert(id);
 			      data[k++]=id;
 #ifdef SPECIFIC_TIME
 		      } else {
