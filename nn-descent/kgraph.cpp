@@ -553,15 +553,17 @@ inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist 
     }
 
 
-            void parallel_try_insert_batch(int siz, const uint32_t*id_vec, const float * dist_mat){
+            void parallel_try_insert_batch(int size, const uint32_t*id_vec, const float * dist_mat, const int step=1){
 	      LockGuard guard(lock);
 
 
-              for(uint32_t i = 0, id; i < siz; i++){
+              //for(uint32_t i = 0, id; i < size; i++){
+              for(uint32_t i=0,id,dist_idx=0; i < size;i++, dist_idx += step){
                 id = id_vec[i];
                 if(id == self ) continue;
 
-                float dist = dist_mat[i];
+               // float dist = dist_mat[i];
+                float dist = dist_mat[dist_idx];
 		if (dist > radius) {
 			continue;
 		}
@@ -594,15 +596,16 @@ uint32_t l;
               }
             }
 
-void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const float * dist_mat){
+void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const float * dist_mat, int step=1){
 
 	      LockGuard guard(lock);
 
-              for(uint32_t i=0,id; i < size;i++){
+              for(uint32_t i=0,id,dist_idx=0; i < size;i++, dist_idx += step){
                 id = id_vec[i];
+                
                 if(id == self ) continue;
 
-                float dist = dist_mat[i];
+                float dist = dist_mat[dist_idx];
 
 //                if(dist > pool[L-1].dist) continue;  // this is slow
                 if(dist >= radius) continue;
@@ -761,7 +764,10 @@ vector<uint32_t> * old ;
                 vector<uint32_t>& nn_old = (*old);
 
                 Eigen::MatrixXf D(nn_old.size(), nn_new.size());
-                squared_dist(nn_new, nn_old, D);
+          D.colwise() = square_sums(nn_old);
+          D.rowwise() += square_sums(nn_new).transpose();
+          D.noalias() -=  nodes(Eigen::all, nn_old).transpose() * nodes(Eigen::all, nn_new);
+                //squared_dist(nn_new, nn_old, D);
 
 #ifdef SPECIFIC_TIME
                 auto times = timer.elapsed();
@@ -770,7 +776,7 @@ vector<uint32_t> * old ;
               float* data = D.data();
               uint32_t cols = D.cols(), rows = D.rows();
 		int old_size = rows - cols;
-		      Eigen::MatrixXf B = D.topRows(rows - cols).transpose();
+//		      Eigen::MatrixXf B = D.topRows(old_size).transpose();
               // Batch insert
 		
               for(size_t ia = 0; ia < cols; ia++, data += rows) {
@@ -785,13 +791,14 @@ vector<uint32_t> * old ;
 
 //                Eigen::internal::set_is_malloc_allowed(false);
 
-                data = B.data();
-                for (size_t ib = 0; ib < old_size; ib++, data += cols) {
+                // data = B.data();
+                data = D.data();
+                for (size_t ib = 0; ib < old_size; ib++, data ++) {
 		 auto &nhood = nhoods[nn_old[ib]];
 		 if (!is_first || nhood.is_full) {
-			    nhood.parallel_try_insert_batch_full(cols, &nn_new[0], data);
+			    nhood.parallel_try_insert_batch_full(cols, &nn_new[0], data, rows);
 		 } else {
-			  nhood.parallel_try_insert_batch(cols, &nn_new[0], data);
+			  nhood.parallel_try_insert_batch(cols, &nn_new[0], data, rows);
 		 }
                 }
 
