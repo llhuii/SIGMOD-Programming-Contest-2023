@@ -553,15 +553,17 @@ inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist 
     }
 
 
-template<typename T>            void parallel_try_insert_batch(int size, const uint32_t*id_vec, T &dist_mat){
+            void parallel_try_insert_batch(int size, const uint32_t*id_vec, const float * dist_mat, const int step=1){
 	      LockGuard guard(lock);
 
 
-              for(uint32_t i = 0, id; i < size; i++){
+              //for(uint32_t i = 0, id; i < size; i++){
+              for(uint32_t i=0,id,dist_idx=0; i < size;i++, dist_idx += step){
                 id = id_vec[i];
                 if(id == self ) continue;
 
-                float dist = dist_mat[i];
+               // float dist = dist_mat[i];
+                float dist = dist_mat[dist_idx];
 		if (dist > radius) {
 			continue;
 		}
@@ -594,16 +596,16 @@ uint32_t l;
               }
             }
 
-template<typename T>void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, T& dist_mat){
+void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const float * dist_mat, int step=1){
 
 	      LockGuard guard(lock);
 
-              for(uint32_t i=0,id; i < size;i++){
+              for(uint32_t i=0,id,dist_idx=0; i < size;i++, dist_idx += step){
                 id = id_vec[i];
                 
                 if(id == self ) continue;
 
-                float dist = dist_mat[i];
+                float dist = dist_mat[dist_idx];
 
 //                if(dist > pool[L-1].dist) continue;  // this is slow
                 if(dist >= radius) continue;
@@ -771,16 +773,15 @@ vector<uint32_t> * old ;
                 auto times = timer.elapsed();
                 total_dist_time += (times.wall / 1e9);
 #endif
-//              float* data = D.data();
+              float* data = D.data();
               uint32_t cols = D.cols(), rows = D.rows();
 		int old_size = rows - cols;
 //		      Eigen::MatrixXf B = D.topRows(old_size).transpose();
               // Batch insert
 		
-              for(size_t ia = 0; ia < cols; ia++) {
+              for(size_t ia = 0; ia < cols; ia++, data += rows) {
 
 		 auto &nhood = nhoods[nn_new[ia]];
-                 auto data = D.col(ia);
 		 if (!is_first || nhood.is_full) {
 			    nhood.parallel_try_insert_batch_full(rows, &nn_old[0], data);
 		 } else {
@@ -791,13 +792,13 @@ vector<uint32_t> * old ;
 //                Eigen::internal::set_is_malloc_allowed(false);
 
                 // data = B.data();
-                for (size_t ib = 0; ib < old_size; ib++) {
+                data = D.data();
+                for (size_t ib = 0; ib < old_size; ib++, data ++) {
 		 auto &nhood = nhoods[nn_old[ib]];
-auto                 data = D.row(ib);
 		 if (!is_first || nhood.is_full) {
-			    nhood.parallel_try_insert_batch_full(cols, &nn_new[0], data);
+			    nhood.parallel_try_insert_batch_full(cols, &nn_new[0], data, rows);
 		 } else {
-			  nhood.parallel_try_insert_batch(cols, &nn_new[0], data);
+			  nhood.parallel_try_insert_batch(cols, &nn_new[0], data, rows);
 		 }
                 }
 
