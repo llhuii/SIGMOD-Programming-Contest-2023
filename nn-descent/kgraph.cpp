@@ -806,12 +806,16 @@ vector<uint32_t> * old ;
        //        nhood.nn_new.resize(0); nhood.nn_new.reserve(params.R + params.L/2);
         //       nhood.nn_old.resize(0); nhood.nn_old.reserve(params.R + params.L/2);
 
-		    vector<uint32_t>().swap(nhoods[n].nn_new);
-		    vector<uint32_t>().swap(nhoods[n].nn_old);
-		// nhoods[n].nn_new.resize(0);
-		 // nhoods[n].nn_old.resize(old_size);
-		 // nhoods[n].nn_old.shrink_to_fit();
-		 // vector<uint32_t>().swap(nhoods[n].nn_old);
+	// 1. no free:
+ 		nhoods[n].nn_new.resize(0); nhoods[n].nn_old.resize(0);
+//
+	//  2. free all:
+	//	    vector<uint32_t>().swap(nhoods[n].nn_new);   vector<uint32_t>().swap(nhoods[n].nn_old);
+
+         // 3. remove extra capacity
+	//	 nhoods[n].nn_new.resize(0);  nhoods[n].nn_old.resize(old_size);  nhoods[n].nn_old.shrink_to_fit(); nhoods[n].nn_old.resize(0);
+         // 4. free nn_old only
+//		 nhoods[n].nn_new.resize(0); vector<uint32_t>().swap(nhoods[n].nn_old);
 		 } else {
                   // vector<uint32_t>().swap(nhood.nn_old);
                    //vector<uint32_t>().swap(nhood.nn_new);
