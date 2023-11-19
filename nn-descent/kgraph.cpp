@@ -791,7 +791,7 @@ is_last = false;
                 }
             }
           auto times = timer.elapsed();
-          cerr << "Init:  time: " << times.wall / 1e9<<"\n";
+          cerr << "Init-w:  time: " << times.wall / 1e9<<"\n";
 
         }
         void join () {
@@ -820,22 +820,36 @@ is_last = false;
 		 auto &nhood = nhoods[n];
 
                 const vector<uint32_t>& nn_new = nhood.nn_new;
+                const vector<uint32_t>& nn_old = nhood.nn_old;
 
-vector<uint32_t> * old ;
+              uint32_t cols = nn_new.size(), rows = nn_new.size() + nn_old.size();
+                vector <uint32_t> _new = nn_new;
+
 
 		 if (!nhood.nn_old.empty()) {
-			 old = &nhood.nn_old;
-			nhood.nn_old.insert(nhood.nn_old.end(), nn_new.begin(), nn_new.end() );
-		 } else {
-			 old = &nhood.nn_new;
+			//nhood.nn_old.insert(nhood.nn_old.end(), nn_new.begin(), nn_new.end() );
+			nhood.nn_new.insert(nhood.nn_new.end(), nn_old.begin(), nn_old.end());
 		 }
-                vector<uint32_t>& nn_old = (*old);
+                 
 
-                Eigen::MatrixXf D(nn_old.size(), nn_new.size());
+
+                Eigen::MatrixXf D(rows, cols);
                 Eigen::internal::set_is_malloc_allowed(false);
-          D.colwise() = square_sums(nn_old);
-          D.rowwise() += square_sums(nn_new).transpose();
-          D.noalias() -=  nodes(Eigen::all, nn_old).transpose() * nodes(Eigen::all, nn_new);
+
+                // D.colwise() = square_sums(nn_old);
+
+                //  D.colwise() = square_sums(nn_new);
+                //
+                // (old, 200) * (200, new)
+          // D.noalias() -=  nodes(Eigen::all, nn_old).transpose() * nodes(Eigen::all, nn_new);
+          
+          D.colwise() = square_sums(nn_new);
+          //
+         // D.rowwise() += square_sums(nn_new)(Eigen::seq(0, cols)).transpose();
+          // D.noalias() -=  nodes(Eigen::all, nn_new).transpose() * nodes(Eigen::all, nn_new)(Eigen::all, Eigen::seq(0, cols));
+           D.rowwise() += square_sums(_new).transpose();
+           D.noalias() -=  nodes(Eigen::all, nn_new).transpose() * nodes(Eigen::all, _new);
+
                 Eigen::internal::set_is_malloc_allowed(true);
 
 #ifdef SPECIFIC_TIME
@@ -843,27 +857,30 @@ vector<uint32_t> * old ;
                 total_dist_time += (times.wall / 1e9);
 #endif
               float* data = D.data();
-              uint32_t cols = D.cols(), rows = D.rows();
 		int old_size = rows - cols;
               // Batch insert
+              //
+
+                const  uint32_t * id_vec = &nn_new[0];
+              
 		
               for(size_t ia = 0; ia < cols; ia++, data += rows) {
 
 		 auto &nhood = nhoods[nn_new[ia]];
 		 if (!is_first || nhood.is_full) {
-			    nhood.parallel_try_insert_batch_full(rows, &nn_old[0], data);
+			    nhood.parallel_try_insert_batch_full(rows, id_vec, data);
 		 } else {
-			 nhood.parallel_try_insert_batch(rows, &nn_old[0], data);
+			 nhood.parallel_try_insert_batch(rows, id_vec, data);
 		 }
               }
 
-                data = D.data();
+                data = D.data() + cols ;
                 for (size_t ib = 0; ib < old_size; ib++, data ++) {
 		 auto &nhood = nhoods[nn_old[ib]];
 		 if (!is_first || nhood.is_full) {
-			    nhood.parallel_try_insert_batch_full_with_step(cols, &nn_new[0], data, rows);
+			    nhood.parallel_try_insert_batch_full_with_step(cols, id_vec, data, rows);
 		 } else {
-			  nhood.parallel_try_insert_batch_with_step(cols, &nn_new[0], data, rows);
+			  nhood.parallel_try_insert_batch_with_step(cols, id_vec, data, rows);
 		 }
                 }
 
