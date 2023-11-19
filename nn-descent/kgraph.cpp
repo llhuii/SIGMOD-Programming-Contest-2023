@@ -556,8 +556,7 @@ inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist 
             void parallel_try_insert_batch(int size, const uint32_t*id_vec, const float * dist_mat){
 	      LockGuard guard(lock);
 
-              //for(uint32_t i=0,id; i < size;i++){
-              for(uint32_t i=size,id; i-- ;){
+              for(uint32_t i=0,id; i < size;i++){
                 id = id_vec[i];
                 if(id == self ) continue;
 
@@ -598,8 +597,7 @@ void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const floa
 
 	      LockGuard guard(lock);
 
-              // for(uint32_t i=0,id; i < size;i++){
-              for(uint32_t i=size,id; i-- ;){
+              for(uint32_t i=0,id; i < size;i++){
                 id = id_vec[i];
                 
                 if(id == self ) continue;
@@ -627,8 +625,7 @@ void parallel_try_insert_batch_full(int size, const uint32_t* id_vec, const floa
             void parallel_try_insert_batch_with_step(int size, const uint32_t*id_vec, const float * dist_mat, const int step){
 	      LockGuard guard(lock);
 
-              //for(uint32_t i=0,id,dist_idx=0; i < size;i++, dist_idx += step){
-              for(uint32_t i=size,id,dist_idx=(size-1)*step; i-- ; dist_idx -= step){
+              for(uint32_t i=0,id,dist_idx=0; i < size;i++, dist_idx += step){
                 id = id_vec[i];
                 if(id == self ) continue;
 
@@ -670,7 +667,7 @@ void parallel_try_insert_batch_full_with_step(int size, const uint32_t* id_vec, 
 
 	      LockGuard guard(lock);
 
-              for(uint32_t i=size,id,dist_idx=(size-1)*step; i-- ; dist_idx -= step){
+              for(uint32_t i=0,id,dist_idx=0; i < size;i++, dist_idx += step){
                 id = id_vec[i];
                 
                 if(id == self ) continue;
@@ -845,8 +842,8 @@ vector<uint32_t> * old ;
                 auto times = timer.elapsed();
                 total_dist_time += (times.wall / 1e9);
 #endif
-              uint32_t cols = D.cols(), rows = D.rows();
               float* data = D.data();
+              uint32_t cols = D.cols(), rows = D.rows();
 		int old_size = rows - cols;
               // Batch insert
 		
@@ -860,7 +857,7 @@ vector<uint32_t> * old ;
 		 }
               }
 
-                data = D.data() ; //data+= (cols-1)*rows;
+                data = D.data();
                 for (size_t ib = 0; ib < old_size; ib++, data ++) {
 		 auto &nhood = nhoods[nn_old[ib]];
 		 if (!is_first || nhood.is_full) {
@@ -1001,8 +998,7 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                 auto &nhood = nhoods[n];
                 nhood.found = false;
 		auto R = params.R;
-                //for (uint32_t l = 0; l < nhood.M; ++l) {
-                for (uint32_t l = nhood.M; l-- ; ) {
+                for (uint32_t l = 0; l < nhood.M; ++l) {
                     auto &nn = nhood.pool[l];
                     auto &nhood_o = nhoods[nn.id>>1];  // nhood on the other side of the edge
                     if (nn.dist <= nhood_o.radiusM) continue; 
@@ -1036,8 +1032,8 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                 auto &nn_new = nhood.nn_new;
                 auto &nn_old = nhood.nn_old;
 
-                // for (uint32_t l = 0; l < nhood.M; ++l) {
-                 for (uint32_t l = nhood.M; l-- ; ) {
+                for (uint32_t l = 0; l < nhood.M; ++l) {
+                // for (uint32_t l = nhood.M-1; l >= 0 ; --l) {
                     auto &nn = nhood.pool[l];
 
                         if (nn.id&1) {
