@@ -372,9 +372,6 @@ int64_t total_inserted;
 int64_t total_moved;
 #endif
 
-            void selectTopK() {
-nth_element(pool.begin(), pool.begin()+99,pool.end());
-}
             // only non-readonly method which is supposed to be called in parallel
             uint32_t parallel_try_insert (uint32_t id, float dist) {
                 if (dist > radius) return pool.size();
@@ -396,125 +393,12 @@ nth_element(pool.begin(), pool.begin()+99,pool.end());
                 return l;
             }
 
-    uint32_t HeapAddKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
 
-	    int idx = size, parent;
-	    float dst = nn.dist;
-	    for(;idx > 0;){
-		  parent  = (idx-1)>>1;
-		 if (dst <= addr[parent].dist) {
-			 break;
-		 }
-		 addr[idx] = addr[parent];
-		 idx = parent;
-	    }
-	    addr[idx] = nn;
-	    
-	    return idx;
-    }
-
-    uint32_t HeapUpdateKnnList(Neighbor* addr, uint32_t size, Neighbor nn) {
-
-	    int idx = 0, left, right;
-	    float dst = nn.dist;
-		    left = idx * 2 + 1;
-	    for(;left < size;){
-		    right = left + 1;
-		    if (right < size && addr[right].dist > addr[left].dist) {
-			    left = right;
-		    }
-		    if (dst >= addr[left].dist) break;
-		    addr[idx] = addr[left];
-
-		    idx = left;
-		    left = idx * 2 + 1;
-
-	    }
-	    addr[idx] = nn;
-	    
-	    return idx;
-    }
-
-inline    uint32_t CustUpdateKnnList(Neighbor* addr, int left, int right, uint32_t size, Neighbor nn) {
-      // find the location to insert
-      if (addr[left].dist > nn.dist) {
-        memmove((char*)&addr[left + 1], &addr[left], (size-left) * sizeof(Neighbor));
-        addr[left] = nn;
-        return left;
-      }
-      if (addr[right].dist < nn.dist) {
-        addr[size] = nn;
-        return size;
-      }
-      while (left < right - 1) {
-        int mid = (left + right) / 2;
-        if (addr[mid].dist > nn.dist)
-          right = mid;
-        else
-          left = mid;
-      }
-      // check equal ID
-
-      while (left > 0) {
-        if (addr[left].dist < nn.dist)
-          break;
-        if ( (addr[left].id>>1) == nn.id)
-          return size + 1;
-        left--;
-      }
-      if ( (addr[left].id>>1) == nn.id || (addr[right].id>>1) == nn.id)
-        return size + 1;
-      memmove((char*)&addr[right + 1],
-              &addr[right],
-              (size - right) * sizeof(Neighbor));
-      addr[right] = nn;
-      return right;
-    }
 inline bool ltFloat(float a, float b)
 {
 return a - b < -1e-7;
 }
 
-inline    uint32_t UpdateKnnListInline(Neighbor* addr, uint32_t id, float dist ) {
-	int size = L;
-      // find the location to insert
-      if (ltFloat(dist, addr[0].dist) ){
-        memmove((char*)&addr[1], addr, size * sizeof(Neighbor));
-        return 0;
-      }
-
-
-      if (!ltFloat(dist, addr[size - 1].dist)){ // >= right
-
-if ((addr[size-1].id>>1) != id)
-        return size;
-return size + 1;
-      }
-
-      int left = 0, right = size - 1;
-
-      while (left < right - 1) {
-        int mid = (left + right) >> 1;
-        
-        if (ltFloat(dist, addr[mid].dist))
-          right = mid;
-        else
-          left = mid;
-      }
-
-      while (left >= 0) {
-        if (ltFloat(addr[left].dist, dist))
-          break;
-        if ( (addr[left].id>>1) == id)
-          return size + 1;
-        left--;
-      }
-
-      memmove((char*)&addr[right + 1],
-              &addr[right],
-              (size - right) * sizeof(Neighbor));
-      return right;
-    }
 
 inline    uint32_t UpdateKnnListInline0(Neighbor* addr, uint32_t id, float dist ) {
 // find the location to insert
@@ -725,29 +609,7 @@ is_first = true;
 is_last = false;
 
             uint32_t seed = params.seed;
-#if W0 == 1
-	    printf("using insert index with previous value\n");
-#elif W0 == 2
-	    printf("using insert index with heap value\n");
-#else
-	    printf("using normal insert index 11/18\n");
-#endif
-	  /*
-            mt19937 rng(seed);
-          boost::timer::cpu_timer timer0;
-#pragma omp parallel
-#pragma omp  for simd
-//            for (auto &nhood: nhoods) {
-                for (uint32_t n = 0; n < N; ++n) {
-                    auto &nhood = nhoods[n];
-                nhood.nn_new.resize(params.S * 2);
-//                nhood.nn_new.resize(60 );
-                nhood.pool.resize(params.L+1);
-                nhood.radius = numeric_limits<float>::max();
-            }
-          auto times0 = timer0.elapsed();
-          cerr << "Init nhoods:  time: " << times0.wall / 1e9<<"\n";
-	  */
+	    printf("using normal insert index 11/20\n");
 
           boost::timer::cpu_timer timer;
 #pragma omp parallel
@@ -888,9 +750,6 @@ vector<uint32_t> * old ;
 	//	 nhoods[n].nn_new.resize(0);  nhoods[n].nn_old.resize(old_size);  nhoods[n].nn_old.shrink_to_fit(); nhoods[n].nn_old.resize(0);
          // 4. free nn_old only
 //		 nhoods[n].nn_new.resize(0); vector<uint32_t>().swap(nhoods[n].nn_old);
-		 } else {
-                  // vector<uint32_t>().swap(nhood.nn_old);
-                   //vector<uint32_t>().swap(nhood.nn_new);
 
 		 }
 
@@ -1033,7 +892,6 @@ void list_pq(std::priority_queue<T> pq, size_t count = 5)
                 auto &nn_old = nhood.nn_old;
 
                 for (uint32_t l = 0; l < nhood.M; ++l) {
-                // for (uint32_t l = nhood.M-1; l >= 0 ; --l) {
                     auto &nn = nhood.pool[l];
 
                         if (nn.id&1) {

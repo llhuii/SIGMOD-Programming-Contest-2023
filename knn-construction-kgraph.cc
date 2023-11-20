@@ -91,10 +91,13 @@ if(v && strlen(v) > 0) {
 return default_;
 }
 
-int main1(int argc, char **argv) {
+
+
+ 
+int main(int argc, char **argv) {
 	boost::timer::cpu_timer timer;
 	string source_path = "dummy-data.bin";
-
+ 
 	// Also accept other path for source data
 	if (argc > 1) {
 		source_path = string(argv[1]);
@@ -155,142 +158,4 @@ int main1(int argc, char **argv) {
 	std::cerr << "Save time: " << (times_save.wall - times_build.wall) / 1e9 << "\n";
 
 	return 0;
-}
-
-
-#define PINT0
-
-#ifdef PINT
-typedef Eigen::MatrixXd PerfType;
-	Eigen::VectorXd square_sums;
-#else
-typedef Eigen::MatrixXf PerfType;
-	Eigen::VectorXf square_sums;
-
-#endif
-	PerfType nodes;
-
-
-static void squared_dist(const vector<uint32_t>& idA, const vector<uint32_t>& idB, PerfType& D){  // Compute squared Euclidean dist between 2 matrixes
-Eigen::internal::set_is_malloc_allowed(false);
-	//          // (100, na)   (100, nb)  ->
-	PerfType A = nodes(Eigen::all, idA); // (100, na)
-	PerfType B = nodes(Eigen::all, idB).transpose(); // (nb, 100)
-	// get square sum
-	PerfType A2 = square_sums(idA, Eigen::all).transpose();  // (1, na)
-	PerfType B2 = square_sums(idB, Eigen::all);  // (nb, 1)
-
-#ifdef PINT
-	D.noalias() += B2 * Eigen::MatrixXd::Ones (1, A2.cols());
-	D.noalias() += Eigen::MatrixXd::Ones (B2.rows(),1) * (A2);
-#else
-	D.noalias() += B2 * Eigen::MatrixXf::Ones (1, A2.cols());
-	D.noalias() += Eigen::MatrixXf::Ones (B2.rows(),1) * (A2);
-#endif
-
-	Eigen::internal::set_is_malloc_allowed(true);
-	return;
-}
-
-int main2(int argc, char **argv) {
-	string source_path = "dummy-data.bin";
-
-	// Also accept other path for source data
-	if (argc > 1) {
-		source_path = string(argv[1]);
-	}
-	omp_set_num_threads(32);
-
-
-	// Read data points
-	//  ReadBinEigen(source_path, KGraph::nodes);   // Eigen version
-#ifdef PINT
-	ReadBinInt(source_path, nodes);   // Eigen version
-#else
-ReadBinEigenColMajor(source_path, nodes);   // Eigen version
-
-#endif
-
-
-
-square_sums =  nodes.colwise().squaredNorm();
-	cout<<nodes.cols()<<"\n";
-	cout<<nodes.col(nodes.cols()-2).size() << endl;
-	cout << "square: " << square_sums[0]<<"\n";
-int N = nodes.cols();
-
-                vector<uint32_t> nn_new, nn_old;
-int size = 100;
-		nn_new.resize(size);
-		nn_old.resize(size);
-		
-		std::mt19937 rng(99);
-		GenRandom(rng, &nn_new[0], nn_new.size(), N);
-		GenRandom(rng, &nn_old[0], nn_old.size(), N);
-                PerfType D(nn_old.size(), nn_new.size());
-	boost::timer::cpu_timer timer;
-            for (uint32_t n = 0; n < 10000; ++n) {
-                //PerfType D(Eigen::seq(0, 100), Eigen::seq(0, 100));
-		squared_dist(nn_new, nn_old, D);
-	    }
-	auto times = timer.elapsed();
-	std::cerr << "cal time: " << times.wall / 1e9 <<"\n";
-return 0;
-}
-
-using namespace std;
-using namespace Eigen;
-int perfIntTest()
-{
- int dimension = 50;
-
- Matrix <int, Dynamic, Dynamic> intMatrixA(dimension, dimension);
- Matrix <int, Dynamic, Dynamic> intMatrixB(dimension, dimension);
- intMatrixA.setRandom();
- intMatrixB.setRandom();
-
- MatrixXf floatMatrixA(dimension, dimension);
- MatrixXf floatMatrixB(dimension, dimension);
- floatMatrixA.setRandom();
- floatMatrixB.setRandom();
-
- MatrixXd doubleMatrixA(dimension, dimension);
- MatrixXd doubleMatrixB(dimension, dimension);
- doubleMatrixA.setRandom();
- doubleMatrixB.setRandom();
-
-{
-	boost::timer::cpu_timer timer;
- MatrixXi resultI = intMatrixA * intMatrixB;
-	auto times = timer.elapsed();
-	std::cerr << "cal int time: " << times.wall / 1e9 <<"\n";
-}
-
-{
-	boost::timer::cpu_timer timer;
- MatrixXf resultF = floatMatrixA * floatMatrixB;
-	auto times = timer.elapsed();
-	std::cerr << "cal float time: " << times.wall / 1e9 <<"\n";
-}
-
-{
-	boost::timer::cpu_timer timer;
- MatrixXd resultD = doubleMatrixA * doubleMatrixB;
-	auto times = timer.elapsed();
-	std::cerr << "cal double time: " << times.wall / 1e9 <<"\n";
-
-}
-
-return 0;
-}
-    struct Neighbor {
-        uint32_t id;
-	uint16_t dist;
-    };
-
-int main(int argc, char **argv) {
-	//return main2(argc, argv);
-//	printf("got %d\n", sizeof(Neighbor));
-return main1(argc, argv);
-//	perfIntTest();
 }
