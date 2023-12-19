@@ -1,0 +1,35 @@
+==========
+2023年 11月 13日 星期一 23:28:12 CST
+Reading Data: /root/contest-release-1m.bin
+# of points: 1000000
+Finish Reading Data
+1000000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+using normal insert index
+Build finished S:100, K:100, L:180, R:295 !
+Saving KNN Graph (1000000 X 100) to output.bin
+Loading ground truth from: /root/contest-release-1m-gt.bin
+# of samples: 100000
+Loading output.bin from: output.bin
+N of output.bin: 1000000
+Calculating recall...
+Recall: 0.996108
+# Cost Time: 0.1936640s
+2023年 11月 13日 星期一 23:30:43 CST
+old ==========
+2023年 11月 13日 星期一 23:32:04 CST
+Reading Data: /root/contest-release-1m.bin
+# of points: 1000000
+Finish Reading Data
+1000000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+Build finished S:100, K:100, L:180, R:295 !
+Saving KNN Graph (1000000 X 100) to output.bin
+Loading ground truth from: /root/contest-release-1m-gt.bin
+# of samples: 100000
+Loading output.bin from: output.bin
+N of output.bin: 1000000
+Calculating recall...
+Recall: 0.996109
+# Cost Time: 0.1944570s
+2023年 11月 13日 星期一 23:34:39 CST

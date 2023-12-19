@@ -1,0 +1,102 @@
+(base) [root@iZ8vb6v4c6d3m4drqhb3cwZ cpp]# time bash ./evaluate.sh ~/contest-release-3m.bin;
++ echo old
+old
++ date
+2023年 11月 13日 星期一 23:19:03 CST
++ ./knng /root/contest-release-3m.bin
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Finish Reading Data
+Load data finished in 1.03383
+3000000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+Generating control...
+Initializing...
+Init:  time: 6.11499
+max radius time is 0.0972142
+-69.7983 -70.0973 -70.1415 -71.0818 -71.5696 -72.7841 -73.8238 -75.595 -77.6938 -2636.88
+-4678.27
+total inserted 1857582166
+Total dist time is 214.167
+Total insert time is 412.373
+iteration: 1 recall: 0.0011 accuracy: 0.81769 cost: 0 M: 96.8948 delta: 1 time: 29.014 one-recall: 0 one-ratio: 1.4355
+Join   elapsed: 19.8732 seconds
+Update  elapsed: 2.53608 seconds
+max radius time is 0.100185
+-66.348 -66.5479 -67.0603 -67.2562 -67.7576 -69.154 -70.657 -72.4093 -74.4351 -2616.01
+-4654.77
+total inserted 2098226517
+Total dist time is 1087.87
+Total insert time is 802.206
+iteration: 2 recall: 0.1112 accuracy: 0.160533 cost: 0 M: 96.8948 delta: 1 time: 91.0167 one-recall: 0 one-ratio: 1.11795
+Join   elapsed: 59.4665 seconds
+Update  elapsed: 2.08806 seconds
+max radius time is 0.100049
+-64.479 -64.6342 -65.3037 -65.6683 -65.8631 -67.4671 -68.6884 -70.4041 -72.3605 -2605.52
+-4637.89
+total inserted 1086361689
+Total dist time is 1115.79
+Total insert time is 1250.14
+iteration: 3 recall: 0.8874 accuracy: 0.00628291 cost: 0 M: 99.2042 delta: 1 time: 167.481 one-recall: 0.13 one-ratio: 1.01292
+Join   elapsed: 74.3768 seconds
+Update  elapsed: 2.26384 seconds
+max radius time is 0.0992985
+-63.7211 -64.0709 -64.4272 -64.6717 -65.2737 -66.8421 -67.874 -69.6849 -71.4184 -2596.18
+-4622.47
+total inserted 59371465
+Total dist time is 1258.18
+Total insert time is 2726.17
+iteration: 4 recall: 0.9695 accuracy: 0.00133139 cost: 0 M: 113.99 delta: 1 time: 294.738 one-recall: 0.16 one-ratio: 1.00263
+Join   elapsed: 124.994 seconds
+Update  elapsed: 3.39182 seconds
+max radius time is 0.0984314
+-63.5112 -63.7918 -64.303 -64.5221 -65.1987 -66.6091 -67.7504 -69.5533 -71.1681 -2591.6
+-4618.73
+total inserted 10566049
+Total dist time is 1211.38
+Total insert time is 2128.85
+iteration: 5 recall: 0.9876 accuracy: 0.000409326 cost: 0 M: 167.192 delta: 1 time: 403.012 one-recall: 0.16 one-ratio: 1.00008
+Join   elapsed: 104.882 seconds
+Update  elapsed: 2.70398 seconds
+max radius time is 0.0993646
+-63.4434 -63.7095 -64.2625 -64.4826 -65.1853 -66.5745 -67.7456 -69.5261 -71.0962 -2590.57
+-4618.16
+total inserted 2051024
+Total dist time is 538.171
+Total insert time is 203.663
+iteration: 6 recall: 0.9928 accuracy: 0.000292617 cost: 0 M: 167.523 delta: 1 time: 429.214 one-recall: 0.16 one-ratio: 0.957911
+Join   elapsed: 23.4983 seconds
+Update  elapsed: 2.5619 seconds
+max radius time is 0.0992376
+-63.4168 -63.6896 -64.2591 -64.4535 -65.1815 -66.5197 -67.7456 -69.5161 -71.066 -2589.8
+-4617.86
+total inserted 685098
+Total dist time is 486.16
+Total insert time is 117.951
+iteration: 7 recall: 0.9944 accuracy: 0.0004163 cost: 0 M: 167.712 delta: 1 time: 450.968 one-recall: 0.17 one-ratio: 0.949496
+Join   elapsed: 19.192 seconds
+Copy data time: 1.26504
+Build finished S:100, K:100, L:180, R:295 !
+Build time: 452.708
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 8.84137
+
+real    7m42.903s
+user    233m59.298s
+sys     2m22.683s
++ evaluating -truth /root/contest-release-3m-gt.bin -eval output.bin
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.99508
+# Cost Time: 0.0205410s
++ date
+2023年 11月 13日 星期一 23:26:50 CST
+
+real    7m47.673s
+user    234m3.984s
+sys     2m23.439s
+(base) [root@iZ8vb6v4c6d3m4drqhb3cwZ cpp]#
+

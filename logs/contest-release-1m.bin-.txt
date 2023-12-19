@@ -1,0 +1,83 @@
+old ==========
+2023年 11月 13日 星期一 23:34:49 CST
+Reading Data: /root/contest-release-1m.bin
+# of points: 1000000
+Finish Reading Data
+Load data finished in 0.354016
+Generating control...1000000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+
+Initializing...
+Init:  time: 1.889
+max radius time is 0.0315485
+-64.4054 -64.9346 -65.2014 -66.9102 -67.1987 -67.7861 -68.4021 -70.2008 -75.5871 -2633.19
+-4676.07
+total inserted 618939882
+Total dist time is 70.6002
+Total insert time is 134.414
+iteration: 1 recall: 0.0038 accuracy: 0.725586 cost: 0 M: 98.6843 delta: 1 time: 9.39806 one-recall: 0 one-ratio: 1.37719
+Join   elapsed: 6.50564 seconds
+Update  elapsed: 0.774333 seconds
+max radius time is 0.0333381
+-60.7403 -61.1476 -62.0047 -63.5395 -63.9677 -64.1392 -64.9102 -66.2841 -72.4506 -2616.39
+-4653.12
+total inserted 681905000
+Total dist time is 355.527
+Total insert time is 265.001
+iteration: 2 recall: 0.2998 accuracy: 0.0943264 cost: 0 M: 98.6843 delta: 1 time: 29.7111 one-recall: 0.03 one-ratio: 1.05576
+Join   elapsed: 19.5391 seconds
+Update  elapsed: 0.627577 seconds
+max radius time is 0.0347406
+-59.0171 -59.6975 -60.2003 -62.4837 -62.7737 -62.9863 -63.476 -64.8328 -70.5939 -2605.99
+-4637.73
+total inserted 228379699
+Total dist time is 367.157
+Total insert time is 575.91
+iteration: 3 recall: 0.9706 accuracy: 0.000974327 cost: 0 M: 102.129 delta: 1 time: 59.9872 one-recall: 0.15 one-ratio: 1.00215
+Join   elapsed: 29.649 seconds
+Update  elapsed: 0.873811 seconds
+max radius time is 0.0336047
+-58.784 -59.3084 -59.8495 -62.2064 -62.2653 -62.3741 -63.171 -64.5211 -70.2473 -2598.34
+-4628.99
+total inserted 7551978
+Total dist time is 518.949
+Total insert time is 1259.76
+iteration: 4 recall: 0.9933 accuracy: 0.000178209 cost: 0 M: 139.168 delta: 1 time: 116.687 one-recall: 0.15 one-ratio: 1.00215
+Join   elapsed: 55.8263 seconds
+Update  elapsed: 0.846421 seconds
+max radius time is 0.0340471
+-58.7601 -59.0989 -59.7574 -62.0122 -62.1777 -62.3567 -63.137 -64.4046 -70.196 -2595.76
+-4627.35
+total inserted 1088165
+Total dist time is 260.269
+Total insert time is 338.322
+iteration: 5 recall: 0.9971 accuracy: 5.35537e-05 cost: 0 M: 162.469 delta: 1 time: 136.395 one-recall: 0.15 one-ratio: 1
+Join   elapsed: 18.8617 seconds
+Update  elapsed: 0.774849 seconds
+max radius time is 0.0334089
+-58.76 -59.0204 -59.7284 -61.9516 -62.1777 -62.3535 -63.1318 -64.3861 -70.1596 -2595.29
+-4626.28
+total inserted 227024
+Total dist time is 163.512
+Total insert time is 41.5045
+iteration: 6 recall: 0.9979 accuracy: 6.47388e-05 cost: 0 M: 162.759 delta: 1 time: 143.683 one-recall: 0.14 one-ratio: 1
+Join   elapsed: 6.51282 seconds
+Update  elapsed: 0.685342 seconds
+max radius time is 0.0341837
+-58.7565 -58.9626 -59.722 -61.9113 -62.1777 -62.3535 -63.1318 -64.381 -70.1565 -2595.04
+-4625.22
+total inserted 92213
+Total dist time is 155.387
+Total insert time is 34.2633
+iteration: 7 recall: 0.998 accuracy: 0.00018808 cost: 0 M: 162.988 delta: 1 time: 150.407 one-recall: 0.14 one-ratio: 0.986006
+Join   elapsed: 6.03868 seconds
+Copy data time: 0.424843
+Build time: Build finished S:100, K:100, L:180, R:295 !
+150.989
+Saving KNN Graph (1000000 X 100) to output.bin
+Save time: 2.97122
+
+real    2m34.455s
+user    78m1.786s
+sys     0m45.728s
+

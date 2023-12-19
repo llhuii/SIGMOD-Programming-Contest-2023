@@ -1,0 +1,793 @@
+new ==========
+2023年 11月 13日 星期一 23:57:35 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Finish Reading Data
+Load data finished in 1.02707
+Generating control...3000000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+
+Initializing...
+Init:  time: 6.03907
+using s__llh
+using normal insert index
+max radius time is 0.117277
+-69.7983 -70.0973 -70.1415 -71.0818 -71.5696 -72.7841 -73.8238 -75.595 -77.6938 -2636.88
+-4678.27
+total inserted 1857583532
+total moved 163368987722
+Total dist time is 217.403
+Total insert time is 400.373
+iteration: 1 recall: 0.0011 accuracy: 0.81769 cost: 0 M: 96.8948 delta: 1 time: 28.6019 one-recall: 0 one-ratio: 1.4355
+Join   elapsed: 19.6191 seconds
+Update  elapsed: 2.58498 seconds
+max radius time is 0.115157
+-66.348 -66.5626 -67.0534 -67.2496 -67.7576 -69.1673 -70.6107 -72.4548 -74.4612 -2615.89
+-4654.77
+total inserted 2098225523
+total moved 194069483094
+Total dist time is 1089.99
+Total insert time is 784.123
+iteration: 2 recall: 0.1112 accuracy: 0.160375 cost: 0 M: 96.8948 delta: 1 time: 90.1745 one-recall: 0 one-ratio: 1.11919
+Join   elapsed: 58.9876 seconds
+Update  elapsed: 2.15382 seconds
+max radius time is 0.11708
+-64.5126 -64.6321 -65.3182 -65.6459 -65.9888 -67.4498 -68.6485 -70.4041 -72.497 -2605.43
+-4637.88
+total inserted 1086441081
+total moved 99846437179
+Total dist time is 1127.38
+Total insert time is 1191.39
+iteration: 3 recall: 0.8886 accuracy: 0.00627559 cost: 0 M: 99.2045 delta: 1 time: 165.247 one-recall: 0.13 one-ratio: 1.01308
+Join   elapsed: 72.9188 seconds
+Update  elapsed: 2.34709 seconds
+max radius time is 0.116751
+-63.7758 -64.0542 -64.4154 -64.612 -65.2737 -66.8456 -67.8711 -69.6648 -71.4763 -2596.27
+-4622.35
+total inserted 59356305
+total moved 5050658758
+Total dist time is 1266.36
+Total insert time is 2469.6
+iteration: 4 recall: 0.9699 accuracy: 0.00130602 cost: 0 M: 113.991 delta: 1 time: 284.853 one-recall: 0.16 one-ratio: 1.00263
+Join   elapsed: 117.26 seconds
+Update  elapsed: 3.52375 seconds
+max radius time is 0.115367
+-63.5278 -63.8063 -64.2806 -64.4969 -65.1768 -66.6671 -67.7476 -69.4932 -71.1804 -2591.63
+-4618.67
+total inserted 10561814
+total moved 798701949
+Total dist time is 1214.67
+Total insert time is 1977.95
+iteration: 5 recall: 0.9876 accuracy: 0.000388154 cost: 0 M: 167.193 delta: 1 time: 388.653 one-recall: 0.16 one-ratio: 1.00008
+Join   elapsed: 100.276 seconds
+Update  elapsed: 2.83305 seconds
+max radius time is 0.115285
+-63.4797 -63.7391 -64.1934 -64.4623 -65.1306 -66.5876 -67.7201 -69.4651 -71.1158 -2590.29
+-4618.14
+total inserted 2051965
+total moved 159772291
+Total dist time is 540.461
+Total insert time is 198.874
+iteration: 6 recall: 0.9927 accuracy: 0.000287074 cost: 0 M: 167.523 delta: 1 time: 414.93 one-recall: 0.16 one-ratio: 0.957911
+Join   elapsed: 23.444 seconds
+Update  elapsed: 2.71735 seconds
+max radius time is 0.115878
+-63.4434 -63.6931 -64.1566 -64.4609 -65.0921 -66.5624 -67.7201 -69.4232 -71.0738 -2589.62
+-4617.73
+total inserted 686466
+total moved 62934950
+Total dist time is 488.403
+Total insert time is 115.869
+iteration: 7 recall: 0.9939 accuracy: 0.000419357 cost: 0 M: 167.714 delta: 1 time: 436.863 one-recall: 0.17 one-ratio: 0.949496
+Join   elapsed: 19.2162 seconds
+Copy data time: 1.28852
+Build time: Build finished S:100, K:100, L:180, R:295 !
+438.686
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 9.10575
+
+real    7m29.139s
+user    226m27.122s
+sys     2m21.923s
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.99495
+# Cost Time: 0.0204770s
+2023年 11月 14日 星期二 00:05:09 CST
+
+real    7m33.916s
+user    226m31.810s
+sys     2m22.684s
+
+new good 0.991 ==========
+2023年 11月 14日 星期二 19:14:47 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.719778
+3000000
+Build starting with S:100, K:100, L:185, R:325, iter=7 !
+Generating control...
+Initializing...
+using s__llh new
+using normal insert index
+Init:  time: 6.01679
+max radius time is 0.115434
+-69.8043 -70.1381 -70.176 -71.1371 -71.6308 -72.8331 -73.8568 -75.6211 -77.7483 -2637.34 
+-4678.6 
+total inserted 1902348865
+total moved 171561269861
+Total dist time is 209.914
+Total insert time is 410.227
+iteration: 1 recall: 0.0011 accuracy: 0.81769 cost: 0 M: 96.8948 delta: 1 time: 28.5924 one-recall: 0 one-ratio: 1.4355
+Join   elapsed: 19.6965 seconds
+Update  elapsed: 2.59987 seconds
+max radius time is 0.119736
+-66.3653 -66.5349 -67.0617 -67.2797 -67.7986 -69.2038 -70.6517 -72.403 -74.4339 -2616.36 
+-4654.93 
+total inserted 2159307602
+total moved 205297695000
+Total dist time is 1037.21
+Total insert time is 825.401
+iteration: 2 recall: 0.1114 accuracy: 0.159774 cost: 0 M: 96.8948 delta: 1 time: 89.8368 one-recall: 0.01 one-ratio: 1.11655
+Join   elapsed: 58.6445 seconds
+Update  elapsed: 2.19427 seconds
+max radius time is 0.118008
+-64.4546 -64.6361 -65.3372 -65.5734 -65.8631 -67.6123 -68.646 -70.3264 -72.3551 -2605.67 
+-4638.76 
+total inserted 1115267892
+total moved 105311935060
+Total dist time is 1077.89
+Total insert time is 1243.35
+iteration: 3 recall: 0.8925 accuracy: 0.00601677 cost: 0 M: 99.1727 delta: 1 time: 165.048 one-recall: 0.19 one-ratio: 1.01444
+Join   elapsed: 73.018 seconds
+Update  elapsed: 2.36248 seconds
+max radius time is 0.117406
+-63.6651 -64.072 -64.3538 -64.7151 -65.2551 -66.8456 -67.8822 -69.6587 -71.4209 -2596.18 
+-4622.83 
+total inserted 58710330
+total moved 5121807519
+Total dist time is 1213.36
+Total insert time is 2584.92
+iteration: 4 recall: 0.9723 accuracy: 0.00124271 cost: 0 M: 114.032 delta: 1 time: 286.637 one-recall: 0.23 one-ratio: 1.00266
+Join   elapsed: 119.226 seconds
+Update  elapsed: 3.61125 seconds
+max radius time is 0.118273
+-63.5023 -63.8469 -64.1662 -64.5587 -65.1768 -66.7005 -67.7912 -69.5445 -71.1993 -2591.89 
+-4618.92 
+total inserted 10500863
+total moved 810928992
+Total dist time is 1236.39
+Total insert time is 2161.69
+iteration: 5 recall: 0.9889 accuracy: 0.00036952 cost: 0 M: 171.214 delta: 1 time: 396.99 one-recall: 0.23 one-ratio: 1.00008
+Join   elapsed: 106.742 seconds
+Update  elapsed: 2.9004 seconds
+max radius time is 0.118578
+-63.4617 -63.746 -64.1037 -64.4751 -65.1311 -66.6855 -67.7504 -69.521 -71.1577 -2590.1 
+-4618.16 
+total inserted 1974808
+total moved 157653033
+Total dist time is 556.201
+Total insert time is 216.398
+iteration: 6 recall: 0.9945 accuracy: 0.000208321 cost: 0 M: 171.599 delta: 1 time: 424.385 one-recall: 0.22 one-ratio: 1.00008
+Join   elapsed: 24.4945 seconds
+Update  elapsed: 2.71665 seconds
+max radius time is 0.119549
+-63.4402 -63.6977 -64.0979 -64.4572 -65.1044 -66.678 -67.7504 -69.4932 -71.0982 -2589.18 
+-4617.07 
+total inserted 667170
+total moved 64475419
+Total dist time is 505.566
+Total insert time is 124.965
+iteration: 7 recall: 0.9959 accuracy: 0.000313368 cost: 0 M: 171.825 delta: 1 time: 447.148 one-recall: 0.2 one-ratio: 1.00008
+Join   elapsed: 20.0468 seconds
+Got duplicate count 169322 1.170705
+Copy data time: 0.0517612
+Build finished S:100, K:100, L:185, R:325 !
+Build time: 448.916
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 8.92877
+
+real	7m38.929s
+user	232m23.508s
+sys	2m27.936s
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.995883
+# Cost Time: 0.0213130s
+2023年 11月 14日 星期二 19:22:31 CST
+debug union ==========
+2023年 11月 15日 星期三 23:16:00 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 15.2956
+3000000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+Generating control...
+Initializing...
+using s__llh new 0
+using normal insert index
+Init:  time: 6.00555
+max radius time is 0.114781
+-69.7983 -70.0973 -70.1415 -71.0818 -71.5696 -72.7841 -73.8238 -75.595 -77.6937 -2636.88 
+-4678.27 
+total inserted 1857567066
+total moved 163368956421
+Total dist time is 167.091
+Total insert time is 407.764
+iteration: 1 recall: 0.0011 accuracy: 0.81769 cost: 0 M: 96.8948 delta: 1 time: 27.1673 one-recall: 0 one-ratio: 1.4355
+Join   elapsed: 18.2722 seconds
+Update  elapsed: 2.6138 seconds
+max radius time is 0.116294
+-66.348 -66.5502 -67.0288 -67.2226 -67.7576 -69.1676 -70.657 -72.4224 -74.4522 -2615.89 
+-4654.77 
+total inserted 2098230762
+total moved 194069943779
+Total dist time is 891.305
+Total insert time is 812.605
+iteration: 2 recall: 0.1105 accuracy: 0.16108 cost: 0 M: 96.8948 delta: 1 time: 83.4523 one-recall: 0.01 one-ratio: 1.1187
+Join   elapsed: 53.6712 seconds
+Update  elapsed: 2.19751 seconds
+max radius time is 0.117321
+-64.4867 -64.6451 -65.3367 -65.5713 -65.9215 -67.5489 -68.6705 -70.3666 -72.3517 -2605.43 
+-4637.88 
+total inserted 1086456214
+total moved 99850393555
+Total dist time is 914.36
+Total insert time is 1210.16
+iteration: 3 recall: 0.8896 accuracy: 0.00617637 cost: 0 M: 99.2045 delta: 1 time: 152.531 one-recall: 0.19 one-ratio: 1.01389
+Join   elapsed: 66.8825 seconds
+Update  elapsed: 2.37583 seconds
+max radius time is 0.117222
+-63.7758 -64.0685 -64.3299 -64.6234 -65.257 -66.8744 -67.893 -69.656 -71.4073 -2596.18 
+-4622.33 
+total inserted 59365776
+total moved 5050724751
+Total dist time is 1033.52
+Total insert time is 2527.77
+iteration: 4 recall: 0.9694 accuracy: 0.00133041 cost: 0 M: 113.985 delta: 1 time: 266.741 one-recall: 0.23 one-ratio: 1.00266
+Join   elapsed: 111.834 seconds
+Update  elapsed: 3.54933 seconds
+max radius time is 0.115887
+-63.4825 -63.7914 -64.1662 -64.5202 -65.1729 -66.6497 -67.7717 -69.4817 -71.1728 -2591.67 
+-4618.67 
+total inserted 10593581
+total moved 803655125
+Total dist time is 929.739
+Total insert time is 2027.77
+iteration: 5 recall: 0.9871 accuracy: 0.000440043 cost: 0 M: 167.177 delta: 1 time: 363.265 one-recall: 0.23 one-ratio: 1.00008
+Join   elapsed: 92.9747 seconds
+Update  elapsed: 2.90525 seconds
+max radius time is 0.116225
+-63.4434 -63.7391 -64.1215 -64.4623 -65.1463 -66.5866 -67.7481 -69.4486 -71.1415 -2590.15 
+-4618.07 
+total inserted 2332312
+total moved 209221517
+Total dist time is 317.035
+Total insert time is 223.474
+iteration: 6 recall: 0.9933 accuracy: 0.000476121 cost: 0 M: 167.524 delta: 1 time: 383.423 one-recall: 0.25 one-ratio: 1.00008
+Join   elapsed: 17.2522 seconds
+Update  elapsed: 2.79614 seconds
+max radius time is 0.115108
+-63.4347 -63.6971 -64.1027 -64.4359 -65.0921 -66.5326 -67.7481 -69.4166 -71.0982 -2589.45 
+-4617.16 
+total inserted 788530
+total moved 79769344
+Total dist time is 222.102
+Total insert time is 216.735
+iteration: 7 recall: 0.9955 accuracy: 0.000567416 cost: 0 M: 168.727 delta: 1 time: 400.285 one-recall: 0.26 one-ratio: 1.00008
+Join   elapsed: 14.0667 seconds
+Got duplicate count 543534 1.174714
+Copy data time: 0.0516721
+Build finished S:100, K:100, L:180, R:295 !
+Build time: 402.049
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 9.16168
+
+real	7m6.858s
+user	207m24.365s
+sys	2m28.282s
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.99551
+# Cost Time: 0.0204750s
+2023年 11月 15日 星期三 23:23:12 CST
+batch ==========
+2023年 11月 17日 星期五 10:02:52 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.86319
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:200, R:330, iter=7 !
+Generating control...
+Initializing...
+using normal insert index
+Init:  time: 6.06607
+iteration: 1 time: 25.3739
+Join   elapsed: 19.1095 seconds
+Update  elapsed: 2.00174 seconds
+iteration: 2 time: 80.7893
+Join   elapsed: 53.4136 seconds
+Update  elapsed: 2.01605 seconds
+iteration: 3 time: 151.855
+Join   elapsed: 69.0498 seconds
+Update  elapsed: 2.1302 seconds
+iteration: 4 time: 270.314
+Join   elapsed: 116.329 seconds
+Update  elapsed: 2.9705 seconds
+iteration: 5 time: 394.335
+Join   elapsed: 121.051 seconds
+Update  elapsed: 2.68942 seconds
+iteration: 6 time: 415.378
+Join   elapsed: 18.3534 seconds
+Update  elapsed: 2.52908 seconds
+iteration: 7 time: 435.859
+Join   elapsed: 17.952 seconds
+Got duplicate count 0 8.375905
+Copy data time: 0.0501226
+Build finished S:100, K:100, L:200, R:330 !
+Build time: 444.78
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 9.74423
+
+real	7m36.105s
+user	232m11.096s
+sys	1m33.196s
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.996495
+# Cost Time: 0.0204740s
+2023年 11月 17日 星期五 10:10:33 CST
+batch ==========
+2023年 11月 17日 星期五 10:21:17 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.775004
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:200, R:330, iter=1 !
+Generating control...
+Initializing...
+using normal insert index
+Init:  time: 6.0872
+iteration: 1 time: 25.0077
+Join   elapsed: 18.7228 seconds
+./evaluate.sh: 行 8: 88047 段错误               (核心已转储)./knng "$input"
+
+real	0m26.448s
+user	13m4.748s
+sys	0m12.891s
+2023年 11月 17日 星期五 10:21:43 CST
+batch ==========
+2023年 11月 17日 星期五 10:24:12 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.773785
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:200, R:330, iter=1 !
+Generating control...
+Initializing...
+using normal insert index
+Init:  time: 6.0768
+iteration: 1 time: 24.8147
+Join   elapsed: 18.5403 seconds
+Got duplicate count 0 1.115240
+Copy data time: 0.0498207
+Build finished S:100, K:100, L:200, R:330 !
+Build time: 26.456
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 9.68392
+
+real	0m37.215s
+user	13m28.554s
+sys	0m13.984s
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.001233
+# Cost Time: 0.0369030s
+2023年 11月 17日 星期五 10:24:54 CST
+batch ==========
+2023年 11月 19日 星期日 21:58:15 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.841643
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:185, R:500, iter=7 !
+Generating control...
+Initializing...
+using normal insert index 11/18
+Init-w:  time: 6.06827
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+free(): invalid size
+free(): invalid size
+double free or corruption (out)
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+free(): invalid size
+munmap_chunk(): invalid pointer
+free(): invalid size
+free(): invalid size
+munmap_chunk(): invalid pointer
+./evaluate.sh: 行 12: 155927 已放弃               (核心已转储)./knng "$input"
+
+real	0m7.472s
+user	3m6.240s
+sys	0m6.976s
+2023年 11月 19日 星期日 21:58:23 CST
+batch ==========
+2023年 11月 19日 星期日 22:07:44 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.760799
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:185, R:500, iter=7 !
+Generating control...
+Initializing...
+using normal insert index 11/18
+Init-w:  time: 6.05797
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+double free or corruption (out)
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+./evaluate.sh: 行 12: 156067 段错误               (核心已转储)./knng "$input"
+
+real	0m7.375s
+user	3m4.842s
+sys	0m7.638s
+2023年 11月 19日 星期日 22:07:51 CST
+batch ==========
+2023年 11月 19日 星期日 22:08:45 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.754754
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:185, R:500, iter=7 !
+Generating control...
+Initializing...
+using normal insert index 11/18
+Init-w:  time: 6.07386
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+double free or corruption (out)
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+free(): invalid size
+free(): invalid size
+munmap_chunk(): invalid pointer
+./evaluate.sh: 行 12: 156166 段错误               (核心已转储)./knng "$input"
+
+real	0m7.385s
+user	3m6.005s
+sys	0m7.089s
+2023年 11月 19日 星期日 22:08:52 CST
+batch ==========
+2023年 11月 19日 星期日 22:14:49 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.750449
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:185, R:500, iter=7 !
+Generating control...
+Initializing...
+using normal insert index 11/18
+Init-w:  time: 6.06793
+iteration: 1 time: 23.8293
+Join   elapsed: 17.5636 seconds
+update init 0.0553479
+update rnn 1.10791
+update nn 0.69421
+Update  elapsed: 1.85757 seconds
+iteration: 2 time: 80.9309
+Join   elapsed: 55.244 seconds
+update init 0.054925
+update rnn 1.12618
+update nn 0.155027
+Update  elapsed: 1.33622 seconds
+iteration: 3 time: 153.769
+Join   elapsed: 71.502 seconds
+update init 0.0551833
+update rnn 1.19937
+update nn 0.173693
+Update  elapsed: 1.42833 seconds
+iteration: 4 time: 234.52
+Join   elapsed: 79.3228 seconds
+update init 0.0529425
+update rnn 1.37735
+update nn 0.348006
+Update  elapsed: 1.77838 seconds
+iteration: 5 time: 303.691
+Join   elapsed: 67.3919 seconds
+update init 0.0550724
+update rnn 0.912397
+update nn 0.198149
+Update  elapsed: 1.1657 seconds
+iteration: 6 time: 346.522
+Join   elapsed: 41.6661 seconds
+update init 0.0560427
+update rnn 0.947875
+update nn 0.217511
+Update  elapsed: 1.22151 seconds
+iteration: 7 time: 392.557
+Join   elapsed: 44.8133 seconds
+Got duplicate count 0 1.225143
+Build finished S:100, K:100, L:185, R:500 !
+Build time: 395.547
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 9.46376
+
+real	6m46.186s
+user	207m7.719s
+sys	1m37.256s
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.062184
+# Cost Time: 0.0360480s
+2023年 11月 19日 星期日 22:21:40 CST
+batch ==========
+2023年 11月 19日 星期日 22:37:10 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.805081
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:185, R:500, iter=7 !
+Generating control...
+Initializing...
+using normal insert index 11/18
+Init-w:  time: 6.3791
+iteration: 1 time: 24.78
+Join   elapsed: 18.2004 seconds
+update init 0.0548336
+update rnn 1.15657
+update nn 0.899947
+Update  elapsed: 2.11144 seconds
+iteration: 2 time: 83.8029
+Join   elapsed: 56.9114 seconds
+update init 0.0547716
+update rnn 1.20062
+update nn 0.15932
+Update  elapsed: 1.41479 seconds
+iteration: 3 time: 160.255
+Join   elapsed: 75.0374 seconds
+update init 0.0551787
+update rnn 1.26365
+update nn 0.192589
+Update  elapsed: 1.51151 seconds
+iteration: 4 time: 282.805
+Join   elapsed: 121.039 seconds
+update init 0.0488769
+update rnn 1.94871
+update nn 0.929296
+Update  elapsed: 2.92697 seconds
+iteration: 5 time: 381.691
+Join   elapsed: 95.9588 seconds
+update init 0.0354902
+update rnn 1.79468
+update nn 0.485805
+Update  elapsed: 2.31606 seconds
+iteration: 6 time: 400.361
+Join   elapsed: 16.3536 seconds
+update init 0.0233229
+update rnn 1.84386
+update nn 0.127224
+Update  elapsed: 1.9945 seconds
+iteration: 7 time: 417.331
+Join   elapsed: 14.9754 seconds
+Got duplicate count 0 0.500265
+Build finished S:100, K:100, L:185, R:500 !
+Build time: 419.859
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 9.46554
+
+real	7m10.605s
+user	219m8.087s
+sys	2m1.038s
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.99658
+# Cost Time: 0.0204990s
+2023年 11月 19日 星期日 22:44:25 CST
+batch ==========
+2023年 11月 19日 星期日 22:46:07 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.765623
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:185, R:500, iter=7 !
+Generating control...
+Initializing...
+using normal insert index 11/18
+Init-w:  time: 6.05587
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+free(): invalid size
+free(): invalid size
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+munmap_chunk(): invalid pointer
+double free or corruption (out)
+free(): invalid size
+munmap_chunk(): invalid pointer
+free(): invalid size
+munmap_chunk(): invalid pointer
+./evaluate.sh: 行 12: 157046 已放弃               (核心已转储)./knng "$input"
+
+real	0m7.377s
+user	3m5.739s
+sys	0m7.105s
+2023年 11月 19日 星期日 22:46:15 CST
+batch ==========
+2023年 11月 19日 星期日 22:48:21 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.751011
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:185, R:500, iter=7 !
+Generating control...
+Initializing...
+using normal insert index 11/18
+Init-w:  time: 6.08162
+iteration: 1 time: 23.7759
+Join   elapsed: 17.4964 seconds
+update init 0.0550768
+update rnn 1.10089
+update nn 0.721537
+Update  elapsed: 1.87759 seconds
+iteration: 2 time: 80.3457
+Join   elapsed: 54.6922 seconds
+update init 0.0550604
+update rnn 1.1223
+update nn 0.159487
+Update  elapsed: 1.33693 seconds
+batch ==========
+2023年 11月 19日 星期日 23:47:32 CST
+Reading Data: /root/contest-release-3m.bin
+# of points: 3000000
+Load data finished in 0.740601
+3000000
+llh: starting with new memory method
+Build starting with S:100, K:100, L:185, R:500, iter=7 !
+Generating control...
+Initializing...
+using normal insert index 11/18
+Init:  time: 6.08855
+iteration: 1 time: 23.9589
+Join   elapsed: 17.6734 seconds
+update init 0.0553374
+update rnn 1.09659
+update nn 0.674465
+Update  elapsed: 1.82649 seconds
+iteration: 2 time: 81.9495
+Join   elapsed: 56.1641 seconds
+update init 0.0550259
+update rnn 1.12716
+update nn 0.160081
+Update  elapsed: 1.34234 seconds
+iteration: 3 time: 157.931
+Join   elapsed: 74.6395 seconds
+update init 0.0553019
+update rnn 1.2452
+update nn 0.16181
+Update  elapsed: 1.4624 seconds
+iteration: 4 time: 282.174
+Join   elapsed: 122.781 seconds
+update init 0.0488518
+update rnn 1.86387
+update nn 0.589065
+Update  elapsed: 2.50187 seconds
+iteration: 5 time: 381.912
+Join   elapsed: 97.236 seconds
+update init 0.035459
+update rnn 1.8154
+update nn 0.137024
+Update  elapsed: 1.9882 seconds
+iteration: 6 time: 399.762
+Join   elapsed: 15.8617 seconds
+update init 0.0231701
+update rnn 1.81252
+update nn 0.136054
+Update  elapsed: 1.97182 seconds
+iteration: 7 time: 416.117
+Join   elapsed: 14.3834 seconds
+Got duplicate count 0 0.513626
+Build finished S:100, K:100, L:185, R:500 !
+Build time: 418.443
+Saving KNN Graph (3000000 X 100) to output.bin
+Save time: 9.40034
+
+real	7m9.070s
+user	219m2.497s
+sys	1m45.485s
+Loading ground truth from: /root/contest-release-3m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 3000000
+Calculating recall...
+Recall: 0.996603
+# Cost Time: 0.0204940s
+2023年 11月 19日 星期日 23:54:45 CST

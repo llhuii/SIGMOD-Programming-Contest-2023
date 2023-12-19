@@ -1,0 +1,86 @@
+debug union ==========
+2023年 11月 16日 星期四 00:58:06 CST
+Reading Data: /root/contest-release-10m-gt.bin
+# of points: 10000
+Load data finished in 0.00198539
+10000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+Generating control...
+Initializing...
+using normal insert index
+Init:  time: 0.0117388
+iteration: 1 recall: 0.0165 accuracy: 0 cost: 0 M: 100 delta: 1 time: 0.610868 one-recall: 1 one-ratio: -nan
+Join   elapsed: 0.574052 seconds
+Update  elapsed: 0.00641393 seconds
+iteration: 2 recall: 0.0164 accuracy: 0 cost: 0 M: 100 delta: 1 time: 2.04248 one-recall: 1 one-ratio: -nan
+Join   elapsed: 1.42519 seconds
+Update  elapsed: 0.00614293 seconds
+iteration: 3 recall: 0.0166 accuracy: 0 cost: 0 M: 180 delta: 1 time: 4.7319 one-recall: 1 one-ratio: -nan
+Join   elapsed: 2.68327 seconds
+Update  elapsed: 0.00606928 seconds
+iteration: 4 recall: 0.0167 accuracy: 0 cost: 0 M: 180 delta: 1 time: 4.81249 one-recall: 1 one-ratio: -nan
+Join   elapsed: 0.0744862 seconds
+Update  elapsed: 0.00597099 seconds
+iteration: 5 recall: 0.0164 accuracy: 0 cost: 0 M: 180 delta: 1 time: 4.89483 one-recall: 1 one-ratio: -nan
+Join   elapsed: 0.0763486 seconds
+Update  elapsed: 0.00596941 seconds
+iteration: 6 recall: 0.0164 accuracy: 0 cost: 0 M: 180 delta: 1 time: 4.98474 one-recall: 1 one-ratio: -nan
+Join   elapsed: 0.0839369 seconds
+Update  elapsed: 0.0059578 seconds
+iteration: 7 recall: 0.0164 accuracy: 0 cost: 0 M: 180 delta: 1 time: 5.0817 one-recall: 1 one-ratio: -nan
+Join   elapsed: 0.0909882 seconds
+Got duplicate count 0 0.005134
+Copy data time: 0.000188778
+Build finished S:100, K:100, L:180, R:295 !
+Build time: 5.08909
+Saving KNN Graph (10000 X 100) to output.bin
+Save time: 0.0655128
+
+real	0m5.170s
+user	2m15.209s
+sys	0m1.001s
+Loading ground truth from: /root/contest-release-10m-gt.bin
+# of samples: 10000
+Loading output.bin from: output.bin
+N of output.bin: 10000
+Calculating recall...
+terminate called recursively
+terminate called after throwing an instance of 'terminate called recursively
+terminate called recursively
+terminate called recursively
+./evaluate.sh: 行 8: 57278 已放弃               (核心已转储)evaluating -truth "$gt" -eval output.bin
+2023年 11月 16日 星期四 00:58:11 CST
+debug union ==========
+2023年 11月 16日 星期四 00:58:12 CST
+Reading Data: /root/contest-release-10m-gt.bin
+# of points: 10000
+Load data finished in 0.00194222
+10000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+Generating control...
+Initializing...
+using normal insert index
+Init:  time: 0.012343
+iteration: 1 recall: 0.0163 accuracy: 0 cost: 0 M: 100 delta: 1 time: 0.611371 one-recall: 1 one-ratio: -nan
+Join   elapsed: 0.57725 seconds
+Update  elapsed: 0.00644924 seconds
+iteration: 2 recall: 0.0163 accuracy: 0 cost: 0 M: 100 delta: 1 time: 2.02497 one-recall: 1 one-ratio: -nan
+Join   elapsed: 1.40715 seconds
+Update  elapsed: 0.00619226 seconds
+batch ==========
+2023年 11月 16日 星期四 00:59:50 CST
+Reading Data: /root/contest-release-10m-gt.bin
+# of points: 10000
+Load data finished in 0.00192536
+10000
+Build starting with S:100, K:100, L:180, R:295, iter=7 !
+Generating control...
+Initializing...
+using normal insert index
+Init:  time: 0.0121358
+iteration: 1 recall: 0.0165 accuracy: 0 cost: 0 M: 100 delta: 1 time: 0.620434 one-recall: 1 one-ratio: -nan
+Join   elapsed: 0.586569 seconds
+Update  elapsed: 0.00647645 seconds
+iteration: 2 recall: 0.0164 accuracy: 0 cost: 0 M: 100 delta: 1 time: 2.04107 one-recall: 1 one-ratio: -nan
+Join   elapsed: 1.41469 seconds
+Update  elapsed: 0.00561671 seconds

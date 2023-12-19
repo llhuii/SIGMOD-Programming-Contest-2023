@@ -609,7 +609,9 @@ is_first = true;
 is_last = false;
 
             uint32_t seed = params.seed;
-	    printf("using normal insert index 11/20\n");
+	    uint32_t init_new_size = 80;
+	    printf("using normal insert index 11/20 init_new_size=%d\n", init_new_size);
+
 
           boost::timer::cpu_timer timer;
 #pragma omp parallel
@@ -627,8 +629,8 @@ is_last = false;
 	    //    llh
 
                // nhood.nn_new.resize(params.S);
+                nhood.nn_new.resize(init_new_size);
                 // nhood.nn_new.reserve(params.L ); nhood.nn_old.reserve(params.L );
-                nhood.nn_new.resize(60);
 
 		nhood.self = n;
                 nhood.pool.resize(params.L+1); 
